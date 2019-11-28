@@ -15,6 +15,19 @@
 
 
 int main(int argc, char *argv[]){
+    std::string a = "0101234ffffe";
+    char ar[14];
+    char code[7];
+    char dst[14];
+    string_into_array(&a, ar, 14);
+    for(int i = 0; i < 14; i++)
+    	printf("%c", ar[i]);
+    printf("\n");
+    code_signal(ar, code, 14);
+    decode_signal(code, dst, 7);
+    for(int i = 0; i < 14; i++)
+    	printf("%c", dst[i]);
+	/*
 	int socker_descriptor = 0, connfd = 0;
 	struct sockaddr_in serv_addr;
 
@@ -46,6 +59,7 @@ int main(int argc, char *argv[]){
     {
     	thr.join();
     }
+    */
 
 	return 0;
 }

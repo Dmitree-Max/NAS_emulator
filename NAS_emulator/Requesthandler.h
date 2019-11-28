@@ -1,10 +1,10 @@
 #ifndef REQUESTHANDLER_H_
 #define REQUESTHANDLER_H_
 
-
+#include "Coding.h"
 #include "Box.h"
 #include <queue>
-#include "Net_stuff.cpp"
+#include "Net_stuff.h"
 
 struct Box_info {
 	Box* box;
@@ -30,21 +30,13 @@ public:
 
 char* comand_handler(char* comand, char* buffer);
 void read_into_buffer(int socket, char* buffer, int symbol_ammount);
+
 void fill_array_with_nules(char* array)
 {
 	memset(array, '0', sizeof(array));
 }
 
-void decode_signal(char* signal, char* distination, int signal_size)
-{
-	for(int symbol = 0; symbol < signal_size; symbol++)
-	{
-		distination[symbol * 2] = char(signal[symbol] / 16);
-		std::cout << "first num  =  " << distination[symbol * 2] << '\n';
-		distination[symbol * 2 + 1] = char(signal[symbol] % 16);
 
-	}
-}
 
 void handle_request(int socket, int id) {
 	bool exit = false;

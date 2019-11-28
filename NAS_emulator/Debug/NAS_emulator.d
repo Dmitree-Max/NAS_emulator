@@ -1,10 +1,12 @@
-NAS_emulator.o: ../NAS_emulator.cpp ../Requesthandler.h ../Box.h \
- ../Disk.h ../Net_stuff.cpp
+NAS_emulator.o: ../NAS_emulator.cpp ../Requesthandler.h ../Coding.h \
+ ../Box.h ../Disk.h ../Net_stuff.h
 
 ../Requesthandler.h:
+
+../Coding.h:
 
 ../Box.h:
 
 ../Disk.h:
 
-../Net_stuff.cpp:
+../Net_stuff.h:
