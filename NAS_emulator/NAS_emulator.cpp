@@ -15,7 +15,7 @@
 
 
 int main(int argc, char *argv[]){
-    std::string a = "0101234ffffe";
+	/*std::string a = "0101234ffffe";
     char ar[14];
     char code[7];
     char dst[14];
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
     decode_signal(code, dst, 7);
     for(int i = 0; i < 14; i++)
     	printf("%c", dst[i]);
-	/*
+	 */
 	int socker_descriptor = 0, connfd = 0;
 	struct sockaddr_in serv_addr;
 
@@ -47,19 +47,20 @@ int main(int argc, char *argv[]){
     bind(socker_descriptor, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     listen(socker_descriptor, 10);
 
+
 	printf("server started\n");
 	int id = 0;
     while(true)
     {
     	connfd = accept(socker_descriptor, (struct sockaddr*)NULL, NULL);
-    	connections.push_back(std::thread(handle_request, connfd, id));
+    	connections.push_back(std::thread(Request_handler::handle_request, connfd, id));
     	id++;
     }
     for (auto &thr : connections)
     {
     	thr.join();
     }
-    */
+
 
 	return 0;
 }

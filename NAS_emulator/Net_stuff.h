@@ -4,7 +4,7 @@
 
 #include <string.h>
 #include <string>
-#define COMMAND_LENGTH 24
+#define COMMAND_LENGTH 22
 
 
 void string_into_array(std::string* note, char* buffer, int buffer_size);

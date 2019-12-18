@@ -5,15 +5,31 @@
 #include "Box.h"
 #include <queue>
 #include "Net_stuff.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
 
 struct Box_info {
 	Box* box;
 	int box_name;
 };
 
+// device header   flags    start    cnt      cmd  fmt
+// 0001   30000002 00000000 00000000 00000000 0003 0000
 struct Request {
+	int device;
+	int header;
 	int comand;
+	int flags;
+	int start;
+	int cnt;
+	int cmd;
+	int fmt;
 };
+
+std::ostream& operator << (std::ostream& stm, const struct Request& req);
+
 
 class Request_handler {
 private:
@@ -23,79 +39,19 @@ public:
 	Request_handler();
 	Box* find_box_by_name(int name);
 	virtual ~Request_handler();
-	int make_snapshot(int box, int disk);
-	int get_configuration();
-	int make_link(int box1, int disk1, int box2, int disk2);
+	static int make_snapshot(int box, int disk);
+	static int get_configuration();
+	static int make_link(int box1, int disk1, int box2, int disk2);
+	static void handle_request(int socket, int id);
+	static char* handle_comand(char* comand, char* buffer, int buffer_size);
+	static void read_into_buffer(int socket, char* buffer, int symbol_ammount);
+	static void fill_array_with_nules(char* array);
+	static void command_parser(std::string* src, struct Request* req);
 };
 
-char* comand_handler(char* comand, char* buffer);
-void read_into_buffer(int socket, char* buffer, int symbol_ammount);
-
-void fill_array_with_nules(char* array)
-{
-	memset(array, '0', sizeof(array));
-}
-
-
-
-void handle_request(int socket, int id) {
-	bool exit = false;
-	char buffer[COMMAND_LENGTH];
-	char work_buffer[COMMAND_LENGTH * 2];
-	int error_code = 0;
-	int additional_notes = 0;
-
-
-	std::string command = "";
-	read_into_buffer(socket, buffer, COMMAND_LENGTH);
-	decode_signal(buffer, work_buffer, COMMAND_LENGTH * 2);
-	char_array_into_string(work_buffer, &command, COMMAND_LENGTH);
-	//additional_notes = command.substr(12, 4);
-	std::cout << "substr = " << command.substr(11, 4) << "\n";
-	std::cout << "cnt = " << additional_notes << "\n";
-	char additional_buffer[additional_notes * COMMAND_LENGTH];
-	char work_additional_buffer[2* additional_notes * COMMAND_LENGTH];
-	//read_into_buffer(socket, additional_buffer, additional_notes * COMMAND_LENGTH);
-	//decode_signal(additional_buffer, work_additional_buffer);
-	std::string ad_command = "";
-	//char_array_into_string(work_additional_buffer, &ad_command);
-
-
-	std::cout << "i got: " << command << " from " << id << "\n";
-	std::cout << "additional was: " << ad_command << " from " << id << "\n";
-	char ans_buffer[COMMAND_LENGTH];
-	write(socket, comand_handler(buffer, ans_buffer), COMMAND_LENGTH);
-	close(socket);
-}
-
-char* comand_handler(char* command, char* buffer) {
-	std::string answer = "";
-	memset(buffer, '0', sizeof(buffer));
-	switch (command[0]) {
-	case '1':
-		answer = "configur";
-		break;
-	default:
-		answer = "nosuchco";
-		break;
-	}
-	string_into_array(&answer, buffer, COMMAND_LENGTH);
-	return buffer;
-}
 
 
 
 
-void read_into_buffer(int socket, char* buffer, int symbol_ammount)
-{
-	fill_array_with_nules(buffer);
-	int error_code = 0;
-	if ((error_code = read(socket, buffer, symbol_ammount)) > 0) {
-	} else {
-		if (error_code < 0) {
-			printf("\n Read error \n");
-		}
-	}
-}
 
 #endif
