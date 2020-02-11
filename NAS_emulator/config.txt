@@ -1,0 +1,6 @@
+System config...
+
+Disks: {1, 3, 5, 7, 9}
+
+Boxes: {|1:[disk 1, sym 5],[disk 3, sym 7]|, |2: [disk 5, sym 5], [disk 7, sym 1005]|}
+

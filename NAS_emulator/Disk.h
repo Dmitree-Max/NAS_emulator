@@ -11,7 +11,8 @@ class Disk {
 	std::mutex disk_mutex;
 public:
 	Disk(int number);
-	virtual ~Disk();
+	~Disk();
+	int get_number();
 };
 
 #endif

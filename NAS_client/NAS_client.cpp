@@ -12,8 +12,10 @@
 #include <iostream>
 #include <bits/stdc++.h>
 #include <string.h>
-#include "Coding.cpp"
-#define COMMAND_LENGTH 22  //22 bytes = 44 symbols in 16's CS
+
+
+#include "socket_interactions.h"
+#define COMMAND_LENGTH 26  //26 bytes = 52 symbols in 16's CS
 
 
 
@@ -35,9 +37,7 @@ int main(int argc, char *argv[]) {
 	printf("Client started\n");
 	int socket_discriptor = 0;
 	printf("\n");
-	char temp_buff[COMMAND_LENGTH * 2];
-	char sendBuff[COMMAND_LENGTH];
-	char answer_buffer[COMMAND_LENGTH];
+
 	printf("%.s", argv[0]);
 
 	if (argc != 2) {
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	struct sockaddr_in serv_addr;
-	memset(sendBuff, '0', sizeof(sendBuff));
+
 	memset(&serv_addr, '0', sizeof(serv_addr));
 
 
@@ -73,21 +73,22 @@ int main(int argc, char *argv[]) {
 		input = "";
 		std::cin >> input;
 		int string_length = input.length();
-		string_into_array(&input, temp_buff, 2 * COMMAND_LENGTH);
-		code_signal(temp_buff, sendBuff, 2 * COMMAND_LENGTH);
-
-		write(socket_discriptor, sendBuff, COMMAND_LENGTH);
-
-		memset(answer_buffer, '0', COMMAND_LENGTH);
-		int error_code = 0;
-		if ((error_code = read(socket_discriptor, answer_buffer, COMMAND_LENGTH)) > 0) {
-			printf("answer: %s\n", answer_buffer);
-		} else {
-			if (error_code < 0) {
-				printf("\n Read error \n");
-				break;
-			}
+		if(string_length < COMMAND_LENGTH)
+		{
+			std::cout << "string shorter then command";
+			continue;
 		}
+		char temp_buff[string_length * 2];
+		char sendBuff[string_length];
+		memset(sendBuff, '0', sizeof(sendBuff));
+		char answer_buffer[COMMAND_LENGTH];
+		string_into_array(&input, temp_buff, 2 * string_length);
+		code_signal(temp_buff, sendBuff, 2 * string_length);
+
+		write(socket_discriptor, sendBuff, string_length);
+
+		handle_answer(socket_discriptor);
+
 		close(socket_discriptor);
 	}
 

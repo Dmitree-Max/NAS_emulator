@@ -4,11 +4,12 @@
 
 Disk::Disk(int arg_number) {
 	number = arg_number;
-
-
 }
 
 Disk::~Disk() {
-	// TODO Auto-generated destructor stub
+}
+
+int Disk::get_number() {
+	return this->number;
 }
 

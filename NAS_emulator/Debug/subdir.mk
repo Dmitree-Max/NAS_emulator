@@ -9,7 +9,9 @@ CPP_SRCS += \
 ../Disk.cpp \
 ../NAS_emulator.cpp \
 ../Net_stuff.cpp \
-../Snapshot.cpp 
+../Requesthandler.cpp \
+../Snapshot.cpp \
+../interior_formats.cpp 
 
 OBJS += \
 ./Box.o \
@@ -17,7 +19,9 @@ OBJS += \
 ./Disk.o \
 ./NAS_emulator.o \
 ./Net_stuff.o \
-./Snapshot.o 
+./Requesthandler.o \
+./Snapshot.o \
+./interior_formats.o 
 
 CPP_DEPS += \
 ./Box.d \
@@ -25,7 +29,9 @@ CPP_DEPS += \
 ./Disk.d \
 ./NAS_emulator.d \
 ./Net_stuff.d \
-./Snapshot.d 
+./Requesthandler.d \
+./Snapshot.d \
+./interior_formats.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
