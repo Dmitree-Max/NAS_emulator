@@ -21,7 +21,7 @@ private:
 	int version;
 	std::list<struct Disk_info>* disks;
 public:
-	std::string* is_device_in_box(int device, Answer* answer);
+	std::string is_device_in_box(int device, Answer* answer);
 	void set_disks(std::list<struct Disk_info>* disks);
 	Box(int number);
 	~Box();

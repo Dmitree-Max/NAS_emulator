@@ -1,6 +1,6 @@
 
 #include "Requesthandler.h"
-extern std::list<Box_info>* boxes;
+extern std::list<struct Box_info>* global_boxes;
 
 Request_handler::Request_handler(Box_info* input_boxes)
 {
@@ -15,9 +15,9 @@ void Request_handler::handle_request(int socket, int id) {
 	std::string* additional_fields = get_additional_fields(socket, current_request->cnt);
 	std::cout << "additional was: " << *additional_fields << " from " << id << "\n";
 
-
 	std::string* answer = handle_comand(current_request, additional_fields);
 
+	//std::cout << "length:  " << answer->length() << "  " << *answer;
 	write_command(socket, answer);
 	close(socket);
 }
@@ -55,12 +55,12 @@ int Request_handler::write_command(int socket, std::string* command)
 
 std::string* Request_handler::get_additional_fields(int socket, int amount)
 {
-	char additional_buffer[amount * COMMAND_LENGTH];
-	char work_additional_buffer[2* amount * COMMAND_LENGTH];
-	read_into_buffer(socket, additional_buffer, amount * COMMAND_LENGTH);
-	decode_signal(additional_buffer, work_additional_buffer, amount * COMMAND_LENGTH);
+	char additional_buffer[amount];
+	char work_additional_buffer[2* amount];
+	read_into_buffer(socket, additional_buffer, amount);
+	decode_signal(additional_buffer, work_additional_buffer, amount);
 	std::string* additional_fields = new std::string;
-	char_array_into_string(work_additional_buffer, additional_fields, amount * COMMAND_LENGTH * 2);
+	char_array_into_string(work_additional_buffer, additional_fields, amount * 2);
 	return additional_fields;
 }
 
@@ -95,7 +95,7 @@ void Request_handler::command_parser(std::string* src, struct Request* req)
 
 Box* Request_handler::find_box_by_name(int name)
 {
-	for(auto& box_info : *boxes)
+	for(auto& box_info : *global_boxes)
 	{
 		if (box_info.box_name == name)
 		{
@@ -107,7 +107,7 @@ Box* Request_handler::find_box_by_name(int name)
 
 std::string* Request_handler::handle_comand(struct Request* request, std::string* additional_fields) {
 	std::string* result = new std::string;
-	std::string* addit = new std::string;
+	std::string addit;
 	Answer* answer = new Answer;
 	if (request->cmd == 1)
 	{
@@ -119,6 +119,6 @@ std::string* Request_handler::handle_comand(struct Request* request, std::string
 			}
 			addit = current_box->is_device_in_box(request->device, answer);
 	}
-	*result = *answer_to_string(answer) + *addit;
+	*result = *answer_to_string(answer) + addit + "\0";
 	return result;
 }

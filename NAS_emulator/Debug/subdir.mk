@@ -11,7 +11,8 @@ CPP_SRCS += \
 ../Net_stuff.cpp \
 ../Requesthandler.cpp \
 ../Snapshot.cpp \
-../interior_formats.cpp 
+../interior_formats.cpp \
+../system_initialize.cpp 
 
 OBJS += \
 ./Box.o \
@@ -21,7 +22,8 @@ OBJS += \
 ./Net_stuff.o \
 ./Requesthandler.o \
 ./Snapshot.o \
-./interior_formats.o 
+./interior_formats.o \
+./system_initialize.o 
 
 CPP_DEPS += \
 ./Box.d \
@@ -31,7 +33,8 @@ CPP_DEPS += \
 ./Net_stuff.d \
 ./Requesthandler.d \
 ./Snapshot.d \
-./interior_formats.d 
+./interior_formats.d \
+./system_initialize.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

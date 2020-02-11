@@ -14,7 +14,7 @@
 #include "system_initialize.h"
 
 
-std::list<Box_info>* boxes = new std::list<Box_info>;
+std::list<Box_info>* global_boxes = new std::list<Box_info>;
 
 int main(int argc, char *argv[]){
 	/*std::string a = "0101234ffffe";
@@ -30,6 +30,7 @@ int main(int argc, char *argv[]){
     for(int i = 0; i < 14; i++)
     	printf("%c", dst[i]);
 	 */
+	//initialize_system("config.txt");
 	initialize_system("config.txt");
 
 	int socker_descriptor = 0, connfd = 0;

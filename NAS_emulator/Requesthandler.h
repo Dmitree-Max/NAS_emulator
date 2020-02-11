@@ -16,6 +16,10 @@
 struct Box_info {
 	Box* box;
 	int box_name;
+	Box_info(){
+		box = nullptr;
+		box_name = 0;
+	}
 };
 
 
