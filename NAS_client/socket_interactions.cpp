@@ -27,6 +27,7 @@ struct Answer* get_answer(int socket)
 
 std::string* get_additional_fields(int socket, int amount)
 {
+	amount = amount * 14;
 	char additional_buffer[amount];
 	char work_additional_buffer[2 * amount];
 	read_into_buffer(socket, additional_buffer, amount);

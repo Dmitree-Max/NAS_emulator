@@ -10,6 +10,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+
 #include "Requesthandler.h"
 #include "system_initialize.h"
 
@@ -32,6 +33,8 @@ int main(int argc, char *argv[]){
 	 */
 	//initialize_system("config.txt");
 	initialize_system("config.txt");
+
+
 
 	int socker_descriptor = 0, connfd = 0;
 	struct sockaddr_in serv_addr;
