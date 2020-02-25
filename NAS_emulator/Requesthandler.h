@@ -5,7 +5,8 @@
 #include "Box.h"
 #include "interior_formats.h"
 #include "Net_stuff.h"
-#include "Socterinteractions.h"
+#include "Socketinteractions.h"
+
 
 #include <iostream>
 #include <queue>
@@ -14,6 +15,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <exception>
+
 
 
 struct Box_info {
@@ -27,22 +29,17 @@ struct Box_info {
 
 
 
-class Request_handler {
-private:
-	std::queue<Request>* requests;
-public:
-	Request_handler(Box_info* boxes);
-	static Box* find_box_by_name(int name);
-	static Box* find_box_by_device(int device);
-	~Request_handler();
-	static int make_snapshot(int box, int disk);
-	static int get_configuration();
-	static int make_link(int box1, int disk1, int box2, int disk2);
-	static void handle_request(int socket, int id);
-
-	static std::string* handle_comand(struct Request* request, int socket);
-
-	static bool command_parser(std::string* src, struct Request* req);
+namespace Request_handler
+{
+	Box* find_box_by_name(int name);
+	Box* find_box_by_device(int device);
+	int make_snapshot(int box, int disk);
+	 int get_configuration();
+	int make_link(int box1, int disk1, int box2, int disk2);
+	void handle_request(int socket, int id);
+	struct Request* get_command(int socket);
+	std::string* handle_comand(struct Request* request, int socket);
+	bool command_parser(std::string* src, struct Request* req);
 
 };
 

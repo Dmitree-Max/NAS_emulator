@@ -1,9 +1,4 @@
-/*
- * Socketinteractions.cpp
- *
- *  Created on: 23 февр. 2020 г.
- *      Author: dmitrii
- */
+
 
 #include "Socketinteractions.h"
 
@@ -17,26 +12,6 @@ Socket_interactions::~Socket_interactions() {
 }
 
 
-struct Request* Socket_interactions::get_command(int socket)
-{
-	char buffer[COMMAND_LENGTH];
-	char work_buffer[COMMAND_LENGTH * 2];
-	std::string command = "";
-	struct Request* current_requuest = new struct Request;
-	bool error = read_into_buffer(socket, buffer, COMMAND_LENGTH);
-	if (error)
-	{
-		return nullptr;
-	}
-	decode_signal(buffer, work_buffer, COMMAND_LENGTH);
-	char_array_into_string(work_buffer, &command, COMMAND_LENGTH * 2);
-	error = command_parser(&command, current_requuest);
-	if (error)
-	{
-		return nullptr;
-	}
-	return current_requuest;
-}
 
 
 int Socket_interactions::write_command(int socket, std::string* command)

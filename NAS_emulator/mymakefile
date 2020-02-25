@@ -1,0 +1,24 @@
+CC=g++
+CFLAGS=-pthread -std=c++11
+LDFLAGS=
+SOURCES=NAS_emulator.cpp Net_stuff.cpp Requesthandler.cpp Disk.cpp Box.cpp Snapshot.cpp system_initialize.cpp interior_formats.cpp Coding.cpp Socketinteractions.cpp 
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=server
+
+all: $(SOURCES) $(EXECUTABLE)
+	
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,3 @@
+all:
+	  g++ tester.cpp socket_interactions.cpp Coding.cpp -std=c++11 -o tester
+

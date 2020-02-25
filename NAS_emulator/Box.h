@@ -4,10 +4,11 @@
 #define BOX_H_
 #include "Disk.h"
 #include "interior_formats.h"
-#include "Socterinteractions.h"
+#include "Socketinteractions.h"
 
 #include <list>
 
+class Disk;
 
 struct Disk_info
 {
@@ -30,6 +31,7 @@ public:
 	void set_disks(std::list<struct Disk_info>* disks);
 	void make_local_coping(int socket, Request* req, Answer* answer);
 	void decreese_load();
+	std::string find_all_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();
 	Box(int number);
 	~Box();

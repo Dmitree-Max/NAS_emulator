@@ -13,9 +13,8 @@
 
 #include "Requesthandler.h"
 #include "system_initialize.h"
+#include "global_variables_and_constants.h"
 
-
-std::list<Box_info>* global_boxes = new std::list<Box_info>;
 
 int main(int argc, char *argv[]){
 	/*std::string a = "0101234ffffe";

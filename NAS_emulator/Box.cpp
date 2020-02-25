@@ -2,6 +2,8 @@
 
 #include "Box.h"
 
+extern std::list<std::thread> global_processes;
+
 Box::Box(int input_number) {
 	disks = new  std::list<struct Disk_info>;
 	version = 0;
@@ -77,42 +79,47 @@ std::list<struct Disk_info>* Box::get_disks()
 void Box::make_local_coping(int socket, Request* req, Answer* answer)
 {
 	int note_length = 8; //8 bytes, src, dst
-	int error = 0;
-	std::string addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
 	int sussecc_count = 0;
 	int displacement = 0;
 	for (int i = 0; i < req->cnt; i++)
 	{
 		if (this->load > this->max_load)
 		{
-			answer->header = 3;
+			answer->header = 30000003;
 			answer->cnt = sussecc_count;
 			return;
 		}
-		int src = std::stoi(addit.substr(0 + displacement, 8 + displacement) , 0, 16);
-		int dst = std::stoi(addit.substr(8 + displacement, 16 + displacement) , 0, 16);
+		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
 		displacement += 16;
 		Disk* src_disk = this->find_device_by_sym(src);
 		Disk* dst_disk = this->find_device_by_sym(dst);
-		if (src_disk==nullpt or dst_disk==nullptr)
+		if (src_disk==nullptr or dst_disk==nullptr)
 		{
-			error = 2;
+			error = 30000002;
 		}
 		else
 		{
-			std::thread(Disk::coping_to, this, dst_disk, 10);
-			std::thread(Disk::coping_from, this, src_disk, 10);
+			src_disk->set_owner(this);
+			dst_disk->set_owner(this);
+
+			global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, 10));
+			global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, 10));
+			sussecc_count += 1;
 		}
 	}
 	answer->header = error;
 	answer->cnt = sussecc_count;
+	answer->cmd = 5;
 	return;
 }
 
 
 Disk* Box::find_device_by_sym(int sym)
 {
-	for(auto disk : this->disks)
+	for(auto disk : *(this->disks))
 	{
 		if (disk.sym == sym)
 			return disk.disk;
@@ -127,6 +134,66 @@ void Box::decreese_load()
 	this->load--;
 	return;
 }
+
+
+std::string Box::find_all_coping(Request* req, Answer* ans)
+{
+	std::string* addit = new std::string;
+	std::list<std::string> copings;
+	for(auto diskinf : *(this->disks))
+	{
+		int dst = diskinf.disk->get_coping_to();
+		if (dst != 0)
+		{
+			std::string current_str = expand_to_byte(diskinf.sym) + expand_to_byte(dst);
+			copings.push_back(current_str);
+		}
+	}
+
+	int note_counter = 0;
+	int start = req->start;
+	int amount = req->cnt;
+
+	std::cout << "Len: " << copings.size() << std::endl;
+	for (auto note : copings)
+	{
+		if (note_counter > amount)
+		{
+			break;
+		}
+		if (note_counter >= start)
+		{
+			*addit += note;
+		}
+		note_counter += 1;
+	}
+	ans->cmd = 4;
+	ans->cnt = note_counter;
+	ans->header = 30000000;
+	std::cout << "amount: " << amount << std::endl;
+	return *addit;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

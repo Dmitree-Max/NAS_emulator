@@ -1,9 +1,15 @@
-/*
- * Socketinteractions.h
- *
- *  Created on: 23 февр. 2020 г.
- *      Author: dmitrii
- */
+#include <iostream>
+#include <queue>
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <exception>
+
+#include "Coding.h"
+#include "Box.h"
+#include "interior_formats.h"
+#include "Net_stuff.h"
 
 #ifndef SOCKETINTERACTIONS_H_
 #define SOCKETINTERACTIONS_H_
@@ -15,7 +21,6 @@ public:
 	static std::string* get_additional_fields(int socket, int amount);
 	static bool read_into_buffer(int socket, char* buffer, int symbol_ammount);
 	static void fill_array_with_nules(char* array);
-	static struct Request* get_command(int socket);
 	static int write_command(int socket, std::string* command);
 };
 

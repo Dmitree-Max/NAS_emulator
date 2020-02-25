@@ -1,7 +1,7 @@
 
 
 #include "system_initialize.h"
-extern std::list<struct Box_info>* global_boxes;
+extern std::list<struct Box_info> global_boxes;
 
 int initialize_system(const char* filename)
 {
@@ -31,7 +31,7 @@ int initialize_system(const char* filename)
 		struct Box_info* new_box = new struct Box_info;
 		new_box->box = current;
 		new_box->box_name = boxinfo.box_name;
-		global_boxes->push_back(*new_box);
+		global_boxes.push_back(*new_box);
 	}
 	return 0;
 }

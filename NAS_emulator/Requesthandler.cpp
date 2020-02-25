@@ -1,16 +1,12 @@
 
 #include "Requesthandler.h"
-extern std::list<struct Box_info>* global_boxes;
+extern std::list<struct Box_info> global_boxes;
 
-Request_handler::Request_handler(Box_info* input_boxes)
-{
-	requests = new std::queue<Request>;
-}
 
 void Request_handler::handle_request(int socket, int id) {
 
 
-	struct Request* current_request = Socket_interactions::get_command(socket);
+	struct Request* current_request = get_command(socket);
 	if (current_request == nullptr)
 	{
 		return;
@@ -27,6 +23,26 @@ void Request_handler::handle_request(int socket, int id) {
 
 
 
+struct Request* Request_handler::get_command(int socket)
+{
+	char buffer[COMMAND_LENGTH];
+	char work_buffer[COMMAND_LENGTH * 2];
+	std::string command = "";
+	struct Request* current_requuest = new struct Request;
+	bool error = Socket_interactions::read_into_buffer(socket, buffer, COMMAND_LENGTH);
+	if (error)
+	{
+		return nullptr;
+	}
+	decode_signal(buffer, work_buffer, COMMAND_LENGTH);
+	char_array_into_string(work_buffer, &command, COMMAND_LENGTH * 2);
+	error = command_parser(&command, current_requuest);
+	if (error)
+	{
+		return nullptr;
+	}
+	return current_requuest;
+}
 
 
 
@@ -55,7 +71,7 @@ bool Request_handler::command_parser(std::string* src, struct Request* req)
 
 Box* Request_handler::find_box_by_name(int name)
 {
-	for(auto& box_info : *global_boxes)
+	for(auto& box_info : global_boxes)
 	{
 		if (box_info.box_name == name)
 		{
@@ -67,11 +83,11 @@ Box* Request_handler::find_box_by_name(int name)
 
 Box* Request_handler::find_box_by_device(int device)
 {
-	for(auto& box_info : *global_boxes)
+	for(auto& box_info : global_boxes)
 	{
-		for (auto& diskindo : *(box_info.box->get_disks()))
+		for (auto& diskinfo : *(box_info.box->get_disks()))
 		{
-			if (diskindo.sym == device)
+			if (diskinfo.disk->get_number() == device)
 			{
 				return box_info.box;
 			}
@@ -94,16 +110,27 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			current_box = find_box_by_name(request->mhop);
 			if (current_box == nullptr)
 			{
-				*result = "0000000000000000000000000000000000000000000000000228";
+				*result = "2280000000000000000000000000000000000000000000000228";
 				return result;
 			}
 			addit = current_box->make_answer_is_device_in_box(request->device, answer);
+			break;
+		case 4:
+			current_box = find_box_by_device(request->device);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000000000000000228";
+				return result;
+			}
+			addit = current_box->find_all_coping(request, answer);
 			break;
 		case 5:
 			current_box = find_box_by_device(request->device);
 			if (current_box == nullptr)
 			{
-				*result = "0000000000000000000000000000000000000000000000000228";
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000000000000000228";
 				return result;
 			}
 			current_box->make_local_coping(socket, request, answer);
@@ -112,5 +139,6 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 
 
 	*result = *answer_to_string(answer) + addit + "\0";
+	std::cout << "answer to client:  " <<*result << std::endl;
 	return result;
 }

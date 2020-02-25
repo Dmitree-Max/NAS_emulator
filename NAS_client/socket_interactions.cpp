@@ -75,14 +75,17 @@ void read_into_buffer(int socket, char* buffer, int buffer_size)
 
 
 
-void handle_answer(int socket) {
+void handle_answer(int socket, int command) {
 
 
 	struct Answer* current_answer = get_answer(socket);
 	std::cout << *current_answer;
-	std::string* additional_fields = get_additional_fields(socket, current_answer->cnt);
-	//std::cout << " length "  << additional_fields->length();
-	std::cout << "additional was: " << *additional_fields << "\n";
+	if (command != 5)
+	{
+		std::string* additional_fields = get_additional_fields(socket, current_answer->cnt);
+		//std::cout << " length "  << additional_fields->length();
+		std::cout << "additional was: " << *additional_fields << "\n";
+	}
 }
 
 
@@ -94,4 +97,31 @@ std::string* char_array_into_string(char* buffer, std::string* str, int buffer_s
 
 	}
 	return str;
+}
+
+
+
+std::string expand_to_byte(int number)
+{
+	std::string result = std::to_string(number);
+	if (result.length() > 8)
+	{
+		throw("Number more then byte");
+	}
+	result = "00000000" + result;
+	result = result.substr(result.length() - 8);
+	return result;
+}
+
+
+std::string expand_to_half_byte(int number)
+{
+	std::string result = std::to_string(number);
+	if (result.length() > 4)
+	{
+		throw("Number more then byte");
+	}
+	result = "0000" + result;
+	result = result.substr(result.length() - 4);
+	return result;
 }
