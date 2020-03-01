@@ -16,7 +16,8 @@
 #include <stdlib.h>
 #include <exception>
 
-
+class Box;
+extern std::list<struct Box_info> global_boxes;
 
 struct Box_info {
 	Box* box;

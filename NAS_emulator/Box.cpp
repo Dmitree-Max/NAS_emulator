@@ -2,7 +2,7 @@
 
 #include "Box.h"
 
-extern std::list<std::thread> global_processes;
+std::list<std::thread> global_processes;
 
 Box::Box(int input_number) {
 	disks = new  std::list<struct Disk_info>;

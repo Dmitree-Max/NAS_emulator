@@ -5,11 +5,16 @@
 #include "Disk.h"
 #include "interior_formats.h"
 #include "Socketinteractions.h"
-#include "global_variables_and_constants.h"
+
 
 #include <list>
 
+
+extern int BOX_MAX_LOAD;
+extern int LOCAL_COPING_TIME;
 class Disk;
+
+extern std::list<std::thread> global_processes;
 
 struct Disk_info
 {

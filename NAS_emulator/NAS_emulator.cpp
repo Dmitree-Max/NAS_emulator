@@ -13,8 +13,8 @@
 
 #include "Requesthandler.h"
 #include "system_initialize.h"
-#include "global_variables_and_constants.h"
 
+extern int WORKING_PORT;
 
 int main(int argc, char *argv[]){
 

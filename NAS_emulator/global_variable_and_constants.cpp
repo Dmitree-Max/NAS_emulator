@@ -1,0 +1,7 @@
+
+
+
+
+int LOCAL_COPING_TIME = 10;
+int BOX_MAX_LOAD = 10;
+int WORKING_PORT = 5060;

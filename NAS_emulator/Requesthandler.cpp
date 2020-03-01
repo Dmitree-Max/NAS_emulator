@@ -1,7 +1,7 @@
 
 #include "Requesthandler.h"
-extern std::list<struct Box_info> global_boxes;
 
+std::list<struct Box_info> global_boxes;
 
 void Request_handler::handle_request(int socket, int id) {
 
