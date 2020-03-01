@@ -5,6 +5,7 @@
 #include "Disk.h"
 #include "interior_formats.h"
 #include "Socketinteractions.h"
+#include "global_variables_and_constants.h"
 
 #include <list>
 
@@ -30,9 +31,10 @@ public:
 	Disk* find_device_by_sym(int sym);
 	void set_disks(std::list<struct Disk_info>* disks);
 	void make_local_coping(int socket, Request* req, Answer* answer);
+	std::string find_all_distance_coping(Request* req, Answer* ans);
 	void activate_local_coping(int socket, Request* req, Answer* answer);
 	void decreese_load();
-	std::string find_all_coping(Request* req, Answer* ans);
+	std::string find_all_local_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();
 	Box(int number);
 	~Box();

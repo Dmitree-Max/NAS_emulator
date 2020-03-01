@@ -133,7 +133,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 				*result = "2280000000000000000000000000000000000000000000000228";
 				return result;
 			}
-			addit = current_box->find_all_coping(request, answer);
+			addit = current_box->find_all_local_coping(request, answer);
 			break;
 		case 5:
 			current_box = find_box_by_device(request->device);

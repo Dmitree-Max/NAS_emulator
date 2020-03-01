@@ -7,6 +7,7 @@ Disk::Disk(int arg_number) {
 	coping_to = 0;
 	coping_from = 0;
 	owner = nullptr;
+	sym_coping = true;
 }
 
 Disk::~Disk() {
@@ -74,7 +75,7 @@ int Disk::get_coping_to()
 }
 
 
-bool Disk::make_coping_to_this_disk(int src)
+bool Disk::make_local_coping_to_this_disk(int src)
 {
 	if (this->disk_mutex.try_lock() == true)
 	{
@@ -82,6 +83,7 @@ bool Disk::make_coping_to_this_disk(int src)
 		if (this->coping_from == 0 && this->coping_to == 0)
 		{
 			this->coping_from = src;
+			this->sym_coping = true;
 			result = true;
 		}
 		else
@@ -98,7 +100,12 @@ bool Disk::make_coping_to_this_disk(int src)
 }
 
 
-bool Disk::make_coping_from_this_disk(int dst)
+bool Disk::get_coping_format()
+{
+	return this->sym_coping;
+}
+
+bool Disk::make_local_coping_from_this_disk(int dst)
 {
 	if (this->disk_mutex.try_lock() == true)
 	{
@@ -106,6 +113,7 @@ bool Disk::make_coping_from_this_disk(int dst)
 		if (this->coping_from == 0 && this->coping_to == 0)
 		{
 			this->coping_to = dst;
+			this->sym_coping = true;
 			result = true;
 		}
 		else

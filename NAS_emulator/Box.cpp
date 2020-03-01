@@ -9,7 +9,7 @@ Box::Box(int input_number) {
 	version = 0;
 	number = input_number;
 	load = 0;
-	max_load = 10;
+	max_load = BOX_MAX_LOAD;
 }
 
 Box::~Box() {
@@ -102,8 +102,8 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 		}
 		else
 		{
-			bool suc1 = dst_disk->make_coping_to_this_disk(src);
-			bool suc2 = src_disk->make_coping_from_this_disk(dst);
+			bool suc1 = dst_disk->make_local_coping_to_this_disk(src);
+			bool suc2 = src_disk->make_local_coping_from_this_disk(dst);
 
 			if (suc1 && suc2 == true)
 			{
@@ -161,8 +161,8 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 			}
 			else
 			{
-				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, 10));
-				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, 10));
+				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, LOCAL_COPING_TIME));
 				sussecc_count += 1;
 			}
 			src_disk->free_mutex();
@@ -196,14 +196,15 @@ void Box::decreese_load()
 }
 
 
-std::string Box::find_all_coping(Request* req, Answer* ans)
+std::string Box::find_all_local_coping(Request* req, Answer* ans)
 {
 	std::string* addit = new std::string;
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
 		int dst = diskinf.disk->get_coping_to();
-		if (dst != 0)
+		bool is_sym_coping = diskinf.disk->get_coping_format();
+		if ((dst != 0) && (is_sym_coping == true))
 		{
 			std::string current_str = expand_to_byte(diskinf.sym) + expand_to_byte(dst);
 			copings.push_back(current_str);
@@ -235,7 +236,44 @@ std::string Box::find_all_coping(Request* req, Answer* ans)
 }
 
 
+std::string Box::find_all_distance_coping(Request* req, Answer* ans)
+{
+	std::string* addit = new std::string;
+	std::list<std::string> copings;
+	for(auto diskinf : *(this->disks))
+	{
+		int dst = diskinf.disk->get_coping_to();
+		bool is_sym_coping = diskinf.disk->get_coping_format();
+		if ((dst != 0) && (is_sym_coping == false))
+		{
+			std::string current_str = expand_to_byte(diskinf.disk->get_number()) + expand_to_byte(dst);
+			copings.push_back(current_str);
+		}
+	}
 
+	int note_counter = 0;
+	int start = req->start;
+	int amount = req->cnt;
+
+	std::cout << "Len: " << copings.size() << std::endl;
+	for (auto note : copings)
+	{
+		if (note_counter > amount)
+		{
+			break;
+		}
+		if (note_counter >= start)
+		{
+			*addit += note;
+		}
+		note_counter += 1;
+	}
+	ans->cmd = 2;
+	ans->cnt = note_counter;
+	ans->header = 30000000;
+	std::cout << "amount: " << amount << std::endl;
+	return *addit;
+}
 
 
 
