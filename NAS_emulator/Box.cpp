@@ -102,20 +102,80 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 		}
 		else
 		{
+			bool suc1 = dst_disk->make_coping_to_this_disk(src);
+			bool suc2 = src_disk->make_coping_from_this_disk(dst);
+
+			if (suc1 && suc2 == true)
+			{
+				if (error == 30000000)
+					error = 30000001;
+			}
+			else
+			{
+				sussecc_count += 1;
+			}
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 3;
+	return;
+}
+
+
+void Box::activate_local_coping(int socket, Request* req, Answer* answer)
+{
+	int note_length = 8; //8 bytes, src, dst
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			answer->cnt = sussecc_count;
+			return;
+		}
+		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
+		displacement += 16;
+		Disk* src_disk = this->find_device_by_sym(src);
+		Disk* dst_disk = this->find_device_by_sym(dst);
+		if (src_disk==nullptr or dst_disk==nullptr)
+		{
+			error = 30000002;
+		}
+		else
+		{
 			src_disk->set_owner(this);
 			dst_disk->set_owner(this);
 
-			global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, 10));
-			global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, 10));
-			sussecc_count += 1;
+			src_disk->lock_mutex();
+			dst_disk->lock_mutex();
+			if (src_disk->is_it_src_to(dst) && dst_disk->is_it_dst_to(src))
+			{
+				if (error == 30000000)
+					error = 30000001;
+			}
+			else
+			{
+				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, 10));
+				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, 10));
+				sussecc_count += 1;
+			}
+			src_disk->free_mutex();
+			dst_disk->free_mutex();
 		}
 	}
 	answer->header = error;
 	answer->cnt = sussecc_count;
 	answer->cmd = 5;
 	return;
-}
 
+
+}
 
 Disk* Box::find_device_by_sym(int sym)
 {

@@ -73,3 +73,76 @@ int Disk::get_coping_to()
 	return this->coping_to;
 }
 
+
+bool Disk::make_coping_to_this_disk(int src)
+{
+	if (this->disk_mutex.try_lock() == true)
+	{
+		bool result;
+		if (this->coping_from == 0 && this->coping_to == 0)
+		{
+			this->coping_from = src;
+			result = true;
+		}
+		else
+		{
+			result = false;
+		}
+		this->disk_mutex.unlock();
+		return result;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+bool Disk::make_coping_from_this_disk(int dst)
+{
+	if (this->disk_mutex.try_lock() == true)
+	{
+		bool result;
+		if (this->coping_from == 0 && this->coping_to == 0)
+		{
+			this->coping_to = dst;
+			result = true;
+		}
+		else
+		{
+			result = false;
+		}
+		this->disk_mutex.unlock();
+		return result;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+bool Disk::is_it_src_to(int dst)
+{
+	return (this->coping_to == dst);
+}
+
+
+bool Disk::is_it_dst_to(int src)
+{
+	return (this->coping_from == src);
+}
+
+void Disk::lock_mutex()
+{
+	this->disk_mutex.lock();
+}
+
+void Disk::free_mutex()
+{
+	this->disk_mutex.unlock();
+}
+
+
+
+

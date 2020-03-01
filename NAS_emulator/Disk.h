@@ -26,6 +26,12 @@ public:
 	void set_owner(Box* parent);
 	int get_coping_to();
 	void set_coping_to(int dst);
+	bool make_coping_to_this_disk(int src);
+	bool make_coping_from_this_disk(int dst);
+	bool is_it_src_to(int dst);
+	bool is_it_dst_to(int src);
+	void lock_mutex();
+	void free_mutex();
 };
 
 #endif

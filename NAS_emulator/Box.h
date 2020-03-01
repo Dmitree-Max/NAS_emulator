@@ -30,6 +30,7 @@ public:
 	Disk* find_device_by_sym(int sym);
 	void set_disks(std::list<struct Disk_info>* disks);
 	void make_local_coping(int socket, Request* req, Answer* answer);
+	void activate_local_coping(int socket, Request* req, Answer* answer);
 	void decreese_load();
 	std::string find_all_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();

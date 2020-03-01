@@ -115,6 +115,16 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			}
 			addit = current_box->make_answer_is_device_in_box(request->device, answer);
 			break;
+		case 3:
+			current_box = find_box_by_device(request->device);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000000000000000228";
+				return result;
+			}
+			current_box->make_local_coping(socket, request, answer);
+			break;
 		case 4:
 			current_box = find_box_by_device(request->device);
 			if (current_box == nullptr)
@@ -133,7 +143,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 				*result = "2280000000000000000000000000000000000000000000000228";
 				return result;
 			}
-			current_box->make_local_coping(socket, request, answer);
+			current_box->activate_local_coping(socket, request, answer);
 			break;
 	}
 
