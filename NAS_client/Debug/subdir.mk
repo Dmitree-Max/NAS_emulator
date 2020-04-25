@@ -4,26 +4,26 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../Coding.cpp \
 ../NAS_client.cpp \
-../client_messanger.cpp \
-../client_messanger2.cpp 
+../socket_interactions.cpp 
 
 OBJS += \
+./Coding.o \
 ./NAS_client.o \
-./client_messanger.o \
-./client_messanger2.o 
+./socket_interactions.o 
 
 CPP_DEPS += \
+./Coding.d \
 ./NAS_client.d \
-./client_messanger.d \
-./client_messanger2.d 
+./socket_interactions.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ../%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross G++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	g++ -std=c++11 -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

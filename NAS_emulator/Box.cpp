@@ -125,6 +125,9 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 
 void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 {
+
+    std::ofstream log;
+    log.open("log.txt");
 	int note_length = 8; //8 bytes, src, dst
 	int error = 30000000;
 	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
@@ -135,6 +138,7 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		if (this->load > this->max_load)
 		{
 			answer->header = 30000003;
+			log << "бокс " << this->number << " перегружен" << std::endl;
 			answer->cnt = sussecc_count;
 			return;
 		}
@@ -146,6 +150,7 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		if (src_disk==nullptr or dst_disk==nullptr)
 		{
 			error = 30000002;
+			log << "девайсы недоступны" << std::endl;
 		}
 		else
 		{
@@ -176,6 +181,62 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 
 
 }
+
+
+void Box::activate_track_local_coping(int socket, Request* req, Answer* answer)
+{
+	int note_length = 24; //24 bytes, src, dst devises, src track, src range, dst track, dst range 4 bytes each
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			answer->cnt = sussecc_count;
+			return;
+		}
+		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
+		displacement += 48;
+		Disk* src_disk = this->find_device_by_sym(src);
+		Disk* dst_disk = this->find_device_by_sym(dst);
+		if (src_disk==nullptr or dst_disk==nullptr)
+		{
+			error = 30000002;
+		}
+		else
+		{
+			src_disk->set_owner(this);
+			dst_disk->set_owner(this);
+
+			src_disk->lock_mutex();
+			dst_disk->lock_mutex();
+			if (src_disk->is_it_src_to(dst) && dst_disk->is_it_dst_to(src))
+			{
+				if (error == 30000000)
+					error = 30000001;
+			}
+			else
+			{
+				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, LOCAL_COPING_TIME));
+				sussecc_count += 1;
+			}
+			src_disk->free_mutex();
+			dst_disk->free_mutex();
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 6;
+	return;
+
+
+}
+
 
 Disk* Box::find_device_by_sym(int sym)
 {

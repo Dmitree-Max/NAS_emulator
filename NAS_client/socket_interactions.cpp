@@ -3,31 +3,26 @@
 int COMMAND_LENGTH = 26;
 int ANSWER_LENGTH = 20;
 
-struct Answer* get_answer(int socket)
+std::string get_answer(int socket, struct Answer* current_answer)
 {
 	char buffer[ANSWER_LENGTH];
 	char work_buffer[ANSWER_LENGTH * 2];
 
 	std::string command = "";
-	struct Answer* current_answer = new struct Answer;
+
 	read_into_buffer(socket, buffer, ANSWER_LENGTH);
 	decode_signal(buffer, work_buffer, ANSWER_LENGTH);
-	std::cout << "decode:  ";
-	for (int i = 0; i < ANSWER_LENGTH * 2; i++)
-	{
-		std::printf("%c", work_buffer[i]);
-	}
-	std::cout << std::endl;
+
 	char_array_into_string(work_buffer, &command, ANSWER_LENGTH * 2);
+	//std::cout << "command: "<<command <<"\n";
 	command_parser(&command, current_answer);
-	return current_answer;
+	return command;
 }
 
 
 
 std::string* get_additional_fields(int socket, int amount)
 {
-	amount = amount * 14;
 	char additional_buffer[amount];
 	char work_additional_buffer[2 * amount];
 	read_into_buffer(socket, additional_buffer, amount);
@@ -37,6 +32,7 @@ std::string* get_additional_fields(int socket, int amount)
 	//std::cout << " length "  << additional_fields->length();
 	return additional_fields;
 }
+
 
 void command_parser(std::string* src, struct Answer* req)
 {
@@ -75,17 +71,26 @@ void read_into_buffer(int socket, char* buffer, int buffer_size)
 
 
 
-void handle_answer(int socket, int command) {
-
-
-	struct Answer* current_answer = get_answer(socket);
-	std::cout << *current_answer;
-	if (command != 5)
-	{
-		std::string* additional_fields = get_additional_fields(socket, current_answer->cnt);
-		//std::cout << " length "  << additional_fields->length();
-		std::cout << "additional was: " << *additional_fields << "\n";
+std::string handle_answer(int socket) {
+	struct Answer* answer = new struct Answer;
+	std::string result = get_answer(socket, answer);
+	int additional_count = answer->cnt;
+	int multiplier = 0;
+	switch(answer->cmd){
+		case 1:
+			multiplier = 20;
+			break;
+		case 2:
+			multiplier = 16;
+			break;
+		case 4:
+			multiplier = 8;
+			break;
 	}
+
+	std::string additional_fields = *get_additional_fields(socket, additional_count * multiplier);
+
+	return result + additional_fields;
 }
 
 
@@ -100,6 +105,16 @@ std::string* char_array_into_string(char* buffer, std::string* str, int buffer_s
 }
 
 
+
+//header   flags    start    cnt      cmd  fmt
+//30000002 00000000 00000000 00000000 0003 0000
+std::string Answer_to_string(const struct Answer& req)
+{
+	return  std::to_string(req.header) + std::to_string(req.flags) + std::to_string(req.start) +
+			std::to_string(req.cnt) + std::to_string(req.cmd) + std::to_string(req.fmt);
+
+
+}
 
 std::string expand_to_byte(int number)
 {

@@ -7,6 +7,8 @@
 #include "Socketinteractions.h"
 
 
+
+#include <fstream>
 #include <list>
 
 
@@ -38,6 +40,7 @@ public:
 	void make_local_coping(int socket, Request* req, Answer* answer);
 	std::string find_all_distance_coping(Request* req, Answer* ans);
 	void activate_local_coping(int socket, Request* req, Answer* answer);
+	void activate_track_local_coping(int socket, Request* req, Answer* answer);
 	void decreese_load();
 	std::string find_all_local_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();

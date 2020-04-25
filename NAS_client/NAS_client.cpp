@@ -1,96 +1,51 @@
-
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <iostream>
-#include <bits/stdc++.h>
-#include <string.h>
-
-
-#include "socket_interactions.h"
-#define COMMAND_LENGTH 26  //26 bytes = 52 symbols in 16's CS
+#include "NAS_client.h"
+#define COMMAND_LENGTH 52  //52 bytes = 26 symbols in ASCII
 
 
 
+namespace nasclient{
+	std::string send_command(std::string command, char* ip_adress, int port) {
+		printf("Client started\n");
+		int socket_discriptor = 0;
+		printf("\n");
 
+		struct sockaddr_in serv_addr;
+		memset(&serv_addr, '0', sizeof(serv_addr));
 
-void string_into_array(std::string* note, char* buffer, int buffer_length) {
-	memset(buffer, '0', buffer_length);
-	for (int i = 0; i < buffer_length; i++) {
-		if (i < (*note).length()) {
-			buffer[i] = (*note)[i];
-		} else {
-			buffer[i] = '0';
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(port);
+
+		if (inet_pton(AF_INET, ip_adress, &serv_addr.sin_addr) <= 0) {
+			return std::string("\n inet_pton error occurred\n");
 		}
-	}
-
-}
-
-int main(int argc, char *argv[]) {
-	printf("Client started\n");
-	int socket_discriptor = 0;
-	printf("\n");
-
-	printf("%.s", argv[0]);
-
-	if (argc != 2) {
-		printf("\n Wrong number of arguments \n");
-		return 1;
-	}
-
-	struct sockaddr_in serv_addr;
-
-	memset(&serv_addr, '0', sizeof(serv_addr));
-
-
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(5060);
-
-	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
-		printf("\n inet_pton error occurred\n");
-		return 1;
-	}
-
-	std::string input;
-	while (1) {
 		if ((socket_discriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-			printf("\n Error : Could not create socket \n");
-			return 1;
+			return std::string("\n Error : Could not create socket \n");
 		}
 		if (connect(socket_discriptor, (struct sockaddr *) &serv_addr, sizeof(serv_addr))
 				< 0) {
-			printf("\n Error: Connect Failed \n");
-			return 1;
+			return std::string("\n Error: Connect Failed \n");
 		}
-		input = "";
-		std::cin >> input;
-		int string_length = input.length();
+
+		int string_length = command.length();
 		if(string_length < COMMAND_LENGTH)
 		{
-			std::cout << "string shorter then command";
-			continue;
+			return std::string("string shorter then command");
 		}
-		char temp_buff[string_length * 2];
-		char sendBuff[string_length];
+		if (string_length % 2 == 1){
+			return std::string("odd command length");
+		}
+		char temp_buff[string_length];
+		char sendBuff[string_length / 2];
 		memset(sendBuff, '0', sizeof(sendBuff));
-		char answer_buffer[COMMAND_LENGTH];
-		string_into_array(&input, temp_buff, 2 * string_length);
-		code_signal(temp_buff, sendBuff, 2 * string_length);
+		string_into_array(&command, temp_buff, string_length);
+		code_signal(temp_buff, sendBuff, string_length);
+		write(socket_discriptor, sendBuff, string_length / 2);
 
-		write(socket_discriptor, sendBuff, string_length);
-
-		handle_answer(socket_discriptor);
+		std::string result = handle_answer(socket_discriptor);
 
 		close(socket_discriptor);
+		return result;
 	}
-
-	return 0;
 }
+
+
