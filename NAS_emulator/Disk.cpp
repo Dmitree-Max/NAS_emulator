@@ -5,7 +5,7 @@
 Disk::Disk(int arg_number) {
 	number = arg_number;
 	src_of_coping_to_this_disk = 0;
-	coping_from_this_disk = new std::list<std::pair<int, int> >;
+	coping_from_this_disk = new std::list<std::pair<int, int> >; //group, dst
 	active_coping = false;
 	owner = nullptr;
 	group = 0;
@@ -66,6 +66,19 @@ void Disk::set_owner(Box* owner)
 {
 	this->owner = owner;
 	return;
+}
+
+
+void Disk::remove_pair_with(int group, int dst)
+{
+	for(auto iter = this->coping_from_this_disk->begin(); iter != this->coping_from_this_disk->end(); iter++)
+	{
+		if ((iter->first == group) and (iter->second == dst))
+		{
+			this->coping_from_this_disk->erase(iter);
+			break;
+		}
+	}
 }
 
 

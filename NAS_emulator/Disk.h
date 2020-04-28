@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "Box.h"
 #include <list>
+#include <iterator>
 
 
 class Box;
@@ -27,6 +28,7 @@ public:
 	bool can_be_dist();
 	void static start_coping(Disk* th, int time);
 
+	void remove_pair_with(int group, int dst);
 	void set_owner(Box* parent);
 	void add_coping_from_this_disk(int group, int dst);
 	bool is_it_active_coping();

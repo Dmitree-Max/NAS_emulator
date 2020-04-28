@@ -366,7 +366,10 @@ void Box::delete_local_pair(int socket, Request* req, Answer* answer){
 				error = 30000001;
 				break;
 			}
+			int src = dst_disk->get_coping_to();
 			dst_disk->remove_from_pair();
+			Disk* src_disk = this->find_device_by_sym(src);
+			src_disk->remove_pair_with(0, dst);
 			sussecc_count += 1;
 		}
 	}
