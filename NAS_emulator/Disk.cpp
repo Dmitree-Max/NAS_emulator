@@ -5,11 +5,10 @@
 Disk::Disk(int arg_number) {
 	number = arg_number;
 	src_of_coping_to_this_disk = 0;
-	std::list<std::pair<bool, int> >*  coping_from_this_disk = new std::list<std::pair<bool, int> >;
-	active_coping_to = 0;
-	active_coping_from = 0;
+	coping_from_this_disk = new std::list<std::pair<int, int> >;
+	active_coping = false;
 	owner = nullptr;
-	sym_coping = true;
+	group = 0;
 }
 
 Disk::~Disk() {
@@ -27,14 +26,27 @@ void Disk::set_coping_to(int dst)
 }
 
 
-void Disk::add_coping_from_this_disk(bool is_sym_coping, int dst){
-	this->coping_from_this_disk->push_back(std::make_pair(is_sym_coping, dst));
+void Disk::add_coping_from_this_disk(int group, int dst){
+	this->coping_from_this_disk->push_back(std::make_pair(group,dst));
 }
 
-void Disk::start_coping_to(Disk* th, int dst, int time)
+
+std::list<std::pair<int, int> >* Disk::get_coping_list()
+{
+	return this->coping_from_this_disk;
+}
+
+
+int Disk::get_group()
+{
+	return this->group;
+}
+
+
+void Disk::start_coping(Disk* th, int time)
 {
 	//std::lock_guard<std::mutex> lock(th->disk_mutex);
-	th->active_coping_to = dst;
+	th->active_coping = true;
 	sleep(time);
 	if (th->owner != nullptr)
 	{
@@ -45,27 +57,7 @@ void Disk::start_coping_to(Disk* th, int dst, int time)
 	{
 		std::cout <<" i have no owner" << std::endl;
 	}
-	th->active_coping_to = 0;
-	return;
-}
-
-
-void Disk::start_coping_from(Disk* th, int src, int time)
-{
-	//std::lock_guard<std::mutex> lock(th->disk_mutex);
-	th->active_coping_from = src;
-	sleep(time);
-	if (th->owner!=nullptr)
-	{
-		th->owner->decreese_load();
-		std::cout <<"process stopped" << std::endl;
-	}
-	else
-	{
-		std::cout <<" i have no owner" << std::endl;
-	}
-	std::cout << "coping finished" << std::endl;
-	th->active_coping_from = 0;
+	th->active_coping = false;
 	return;
 }
 
@@ -83,15 +75,15 @@ int Disk::get_coping_to()
 }
 
 
-bool Disk::make_local_coping_to_this_disk(int src)
+bool Disk::make_coping_to_this_disk(int group, int src)
 {
+	this->group = group;
 	if (this->disk_mutex.try_lock() == true)
 	{
 		bool result;
 		if (this->src_of_coping_to_this_disk == 0)
 		{
 			this->src_of_coping_to_this_disk = src;
-			this->sym_coping = true;
 			result = true;
 		}
 		else
@@ -115,36 +107,6 @@ bool Disk::can_be_dist()
 }
 
 
-bool Disk::get_coping_format()
-{
-	return this->sym_coping;
-}
-
-bool Disk::make_local_coping_from_this_disk(int dst)
-{
-	if (this->disk_mutex.try_lock() == true)
-	{
-		bool result;
-		if (this->coping_from_this_disk == 0 && this->src_of_coping_to_this_disk == 0)
-		{
-			this->src_of_coping_to_this_disk = dst;
-			this->sym_coping = true;
-			result = true;
-		}
-		else
-		{
-			result = false;
-		}
-		this->disk_mutex.unlock();
-		return result;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-
 bool Disk::is_it_src_to(int dst)
 {
 	return (this->src_of_coping_to_this_disk == dst);
@@ -152,7 +114,7 @@ bool Disk::is_it_src_to(int dst)
 
 
 bool Disk::is_it_active_coping(){
-	return (this->active_coping_from != 0) or (this->active_coping_to != 0);
+	return this->active_coping;
 }
 
 

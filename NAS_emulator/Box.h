@@ -5,7 +5,7 @@
 #include "Disk.h"
 #include "interior_formats.h"
 #include "Socketinteractions.h"
-
+#include "Requesthandler.h"
 
 
 #include <fstream>
@@ -17,6 +17,7 @@ extern int LOCAL_COPING_TIME;
 class Disk;
 
 extern std::list<std::thread> global_processes;
+
 
 struct Disk_info
 {
@@ -32,6 +33,7 @@ private:
 	int version;
 	int max_load;
 	std::list<struct Disk_info>* disks;
+	std::list<std::pair<int, int> >* groups;      // first is group and second is box id
 public:
 	std::string make_answer_is_device_in_box(int device, Answer* answer);
 	bool find_if_device_in_box(int device, Answer* answer, int& sym);
@@ -45,6 +47,7 @@ public:
 	void delete_local_pair(int socket, Request* req, Answer* ans);
 	std::string find_all_local_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();
+	int get_group_on_another_side(int group);
 	Box(int number);
 	~Box();
 };

@@ -6,6 +6,7 @@ std::list<std::thread> global_processes;
 
 Box::Box(int input_number) {
 	disks = new  std::list<struct Disk_info>;
+	groups = new std::list<std::pair<int, int> >;
 	version = 0;
 	number = input_number;
 	load = 0;
@@ -76,6 +77,39 @@ std::list<struct Disk_info>* Box::get_disks()
 }
 
 
+int Box::get_group_on_another_side(int group)
+{
+	int box_group_with_name = 0;
+	for(auto group_info : *(this->groups))
+	{
+		if (group_info.first == group)
+		{
+			box_group_with_name = group_info.second;
+			break;
+		}
+	}
+	if (box_group_with_name != 0)
+	{
+		Box* box = Request_handler::find_box_by_name(box_group_with_name);
+		if (box == nullptr)
+		{
+			return 0;
+		}
+		else
+		{
+			for(auto group_info : *(box->groups))
+			{
+				if (group_info.first == this->number)
+				{
+					return group_info.second;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+
 void Box::make_local_coping(int socket, Request* req, Answer* answer)
 {
 	int note_length = 8; //8 bytes, src, dst
@@ -116,8 +150,8 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 			}
 			else
 			{
-				dst_disk->make_local_coping_to_this_disk(src);
-				src_disk->add_coping_from_this_disk(dst);
+				dst_disk->make_coping_to_this_disk(0, src);
+				src_disk->add_coping_from_this_disk(0, dst);
 				sussecc_count += 1;
 			}
 		}
@@ -172,8 +206,8 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 			}
 			else
 			{
-				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, LOCAL_COPING_TIME));
-				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping, src_disk, LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping, dst_disk, LOCAL_COPING_TIME));
 				sussecc_count += 1;
 			}
 			src_disk->free_mutex();
@@ -201,8 +235,7 @@ void Box::activate_track_local_coping(int socket, Request* req, Answer* answer)
 		if (this->load > this->max_load)
 		{
 			answer->header = 30000003;
-			answer->cnt = sussecc_count;
-			return;
+			break;
 		}
 		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
 		int dst = std::stoi(addit->substr(8 + displacement, 8) , 0, 16);
@@ -212,6 +245,7 @@ void Box::activate_track_local_coping(int socket, Request* req, Answer* answer)
 		if (src_disk==nullptr or dst_disk==nullptr)
 		{
 			error = 30000002;
+			break;
 		}
 		else
 		{
@@ -220,15 +254,15 @@ void Box::activate_track_local_coping(int socket, Request* req, Answer* answer)
 
 			src_disk->lock_mutex();
 			dst_disk->lock_mutex();
-			if (src_disk->is_it_src_to(dst) && dst_disk->is_it_dst_to(src))
+			if (!dst_disk->is_it_dst_to(src))
 			{
-				if (error == 30000000)
-					error = 30000001;
+				error = 30000001;
+				break;
 			}
 			else
 			{
-				global_processes.push_back(std::thread(Disk::start_coping_to, src_disk, src, LOCAL_COPING_TIME));
-				global_processes.push_back(std::thread(Disk::start_coping_from, dst_disk, dst, LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping, src_disk,  LOCAL_COPING_TIME));
+				global_processes.push_back(std::thread(Disk::start_coping, dst_disk,  LOCAL_COPING_TIME));
 				sussecc_count += 1;
 			}
 			src_disk->free_mutex();
@@ -269,11 +303,11 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
-		int dst = diskinf.disk->get_coping_to();
-		bool is_sym_coping = diskinf.disk->get_coping_format();
-		if ((dst != 0) && (is_sym_coping == true))
+		int src = diskinf.disk->get_coping_to();
+		int group = diskinf.disk->get_group();
+		if ((src != 0) and (group == 0))
 		{
-			std::string current_str = expand_to_byte(diskinf.sym) + expand_to_byte(dst);
+			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf.sym);
 			copings.push_back(current_str);
 		}
 	}
@@ -349,12 +383,28 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
-		int dst = diskinf.disk->get_coping_to();
-		bool is_sym_coping = diskinf.disk->get_coping_format();
-		if ((dst != 0) && (is_sym_coping == false))
+		int src = diskinf.disk->get_coping_to();
+		int group = diskinf.disk->get_group();
+		if ((src != 0) and (group != 0))
 		{
-			std::string current_str = expand_to_byte(diskinf.disk->get_number()) + expand_to_byte(dst);
+			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf.disk->get_number())
+					+ expand_to_byte(this->get_group_on_another_side(group)) + expand_to_byte(group);
 			copings.push_back(current_str);
+		}
+	}
+
+	for(auto diskinf : *(this->disks))
+	{
+		for(auto dst_element : *(diskinf.disk->get_coping_list()))
+		{
+			int dst = dst_element.second;
+			int group = dst_element.first;
+			if ((dst != 0) and (group != 0))
+			{
+				std::string current_str = expand_to_byte(diskinf.disk->get_number()) + expand_to_byte(dst) + expand_to_byte(group)
+						+ expand_to_byte(this->get_group_on_another_side(group));
+				copings.push_back(current_str);
+			}
 		}
 	}
 
