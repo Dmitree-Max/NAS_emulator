@@ -89,29 +89,35 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 		{
 			answer->header = 30000003;
 			answer->cnt = sussecc_count;
-			return;
+			break;
 		}
-		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
-		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
+		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 8) , 0, 16);
 		displacement += 16;
 		Disk* src_disk = this->find_device_by_sym(src);
 		Disk* dst_disk = this->find_device_by_sym(dst);
 		if (src_disk==nullptr or dst_disk==nullptr)
 		{
 			error = 30000002;
+			break;
 		}
 		else
 		{
-			bool suc1 = dst_disk->make_local_coping_to_this_disk(src);
-			bool suc2 = src_disk->make_local_coping_from_this_disk(dst);
-
-			if (suc1 && suc2 == true)
+			bool already_in_pair = src_disk->is_it_src_to(dst);
+			if (already_in_pair){
+				error = 30000001;
+				break;
+			}
+			bool can_be_target = dst_disk->can_be_dist();
+			if (can_be_target == false)
 			{
-				if (error == 30000000)
-					error = 30000001;
+					error = 30000004;
+					break;
 			}
 			else
 			{
+				dst_disk->make_local_coping_to_this_disk(src);
+				src_disk->add_coping_from_this_disk(dst);
 				sussecc_count += 1;
 			}
 		}
@@ -139,11 +145,10 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		{
 			answer->header = 30000003;
 			log << "бокс " << this->number << " перегружен" << std::endl;
-			answer->cnt = sussecc_count;
-			return;
+			break;
 		}
-		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
-		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
+		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 8) , 0, 16);
 		displacement += 16;
 		Disk* src_disk = this->find_device_by_sym(src);
 		Disk* dst_disk = this->find_device_by_sym(dst);
@@ -151,6 +156,7 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		{
 			error = 30000002;
 			log << "девайсы недоступны" << std::endl;
+			break;
 		}
 		else
 		{
@@ -159,10 +165,10 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 
 			src_disk->lock_mutex();
 			dst_disk->lock_mutex();
-			if (src_disk->is_it_src_to(dst) && dst_disk->is_it_dst_to(src))
+			if (!dst_disk->is_it_dst_to(src))
 			{
-				if (error == 30000000)
-					error = 30000001;
+				error = 30000001;
+				break;
 			}
 			else
 			{
@@ -198,8 +204,8 @@ void Box::activate_track_local_coping(int socket, Request* req, Answer* answer)
 			answer->cnt = sussecc_count;
 			return;
 		}
-		int src = std::stoi(addit->substr(0 + displacement, 8 + displacement) , 0, 16);
-		int dst = std::stoi(addit->substr(8 + displacement, 16 + displacement) , 0, 16);
+		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 8) , 0, 16);
 		displacement += 48;
 		Disk* src_disk = this->find_device_by_sym(src);
 		Disk* dst_disk = this->find_device_by_sym(dst);
@@ -294,6 +300,46 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 	ans->header = 30000000;
 	std::cout << "amount: " << amount << std::endl;
 	return *addit;
+}
+
+
+void Box::delete_local_pair(int socket, Request* req, Answer* answer){
+	int note_length = 4; // dst
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			answer->cnt = sussecc_count;
+			break;
+		}
+		int dst = std::stoi(addit->substr(displacement, 4) , 0, 16);
+		displacement += 4;
+		Disk* dst_disk = this->find_device_by_sym(dst);
+		if (dst_disk==nullptr)
+		{
+			error = 30000002;
+			break;
+		}
+		else
+		{
+			bool coping_this_moment = dst_disk->is_it_active_coping();
+			if (coping_this_moment){
+				error = 30000001;
+				break;
+			}
+			dst_disk->remove_from_pair();
+			sussecc_count += 1;
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 7;
+	return;
 }
 
 

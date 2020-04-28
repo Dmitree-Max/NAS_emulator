@@ -98,6 +98,22 @@ Box* Request_handler::find_box_by_device(int device)
 }
 
 
+Box* Request_handler::get_box_of_request(struct Request* request)
+{
+	Box* current_box;
+	if (request->mhop != 0)
+	{
+		current_box = find_box_by_name(request->mhop);
+		return current_box;
+	}
+	else
+	{
+		current_box = find_box_by_device(request->device);
+		return current_box;
+	}
+}
+
+
 std::string* Request_handler::handle_comand(struct Request* request, int socket) {
 //	std::string* additional_fields = get_additional_fields(socket, current_request->cnt);
 //	std::cout << "additional was: " << *additional_fields << " from " << id << "\n";
@@ -108,21 +124,17 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 	switch (request->cmd)
 	{
 		case 1:
-			current_box = find_box_by_name(request->mhop);
+			current_box = get_box_of_request(request);
 			if (current_box == nullptr)
 			{
-				current_box = find_box_by_device(request->device);
-				if (current_box == nullptr)
-				{
-					std::cout << "Box with device " << request->device << " not found" << std::endl;
-					*result = "2280000000000000000000000000000000000001";
-					return result;
-				}
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000001";
+				return result;
 			}
 			addit = current_box->make_answer_is_device_in_box(request->device, answer);
 			break;
 		case 3:
-			current_box = find_box_by_device(request->device);
+			current_box = get_box_of_request(request);
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
@@ -132,7 +144,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			current_box->make_local_coping(socket, request, answer);
 			break;
 		case 4:
-			current_box = find_box_by_device(request->device);
+			current_box = get_box_of_request(request);
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
@@ -142,7 +154,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			addit = current_box->find_all_local_coping(request, answer);
 			break;
 		case 5:
-			current_box = find_box_by_device(request->device);
+			current_box = get_box_of_request(request);
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
@@ -152,14 +164,24 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			current_box->activate_local_coping(socket, request, answer);
 			break;
 		case 6:
-			current_box = find_box_by_device(request->device);
+			current_box = get_box_of_request(request);
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000000000000000228";
+				*result = "2280000000000000000000000000000000000006";
 				return result;
 			}
 			current_box->activate_track_local_coping(socket, request, answer);
+			break;
+		case 7:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000007";
+				return result;
+			}
+			current_box->delete_local_pair(socket, request, answer);
 			break;
 	}
 

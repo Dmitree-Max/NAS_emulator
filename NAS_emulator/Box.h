@@ -42,6 +42,7 @@ public:
 	void activate_local_coping(int socket, Request* req, Answer* answer);
 	void activate_track_local_coping(int socket, Request* req, Answer* answer);
 	void decreese_load();
+	void delete_local_pair(int socket, Request* req, Answer* ans);
 	std::string find_all_local_coping(Request* req, Answer* ans);
 	std::list<struct Disk_info>* get_disks();
 	Box(int number);

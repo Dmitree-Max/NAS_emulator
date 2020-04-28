@@ -34,6 +34,7 @@ namespace Request_handler
 {
 	Box* find_box_by_name(int name);
 	Box* find_box_by_device(int device);
+	Box* get_box_of_request(struct Request* request);
 	void handle_request(int socket, int id);
 	struct Request* get_command(int socket);
 	std::string* handle_comand(struct Request* request, int socket);
