@@ -37,7 +37,6 @@ public:
 	std::list<std::pair<int, int> >* get_coping_list();
 	void set_coping_to(int dst);
 	bool make_coping_to_this_disk(int group, int src);
-	bool is_it_src_to(int dst);
 	bool is_it_dst_to(int src);
 	void remove_from_pair();
 	void lock_mutex();

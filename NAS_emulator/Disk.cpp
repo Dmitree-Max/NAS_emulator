@@ -120,12 +120,6 @@ bool Disk::can_be_dist()
 }
 
 
-bool Disk::is_it_src_to(int dst)
-{
-	return (this->src_of_coping_to_this_disk == dst);
-}
-
-
 bool Disk::is_it_active_coping(){
 	return this->active_coping;
 }

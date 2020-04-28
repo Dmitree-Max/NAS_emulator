@@ -137,7 +137,7 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 		}
 		else
 		{
-			bool already_in_pair = src_disk->is_it_src_to(dst);
+			bool already_in_pair = dst_disk->is_it_dst_to(src);
 			if (already_in_pair){
 				error = 30000001;
 				break;
@@ -159,6 +159,95 @@ void Box::make_local_coping(int socket, Request* req, Answer* answer)
 	answer->header = error;
 	answer->cnt = sussecc_count;
 	answer->cmd = 3;
+	return;
+}
+
+
+
+Box* Box::find_box_by_group(int group)
+{
+	int box_number = 0;
+	for(auto group_info : *(this->groups))
+	{
+		if (group_info.first == group)
+		{
+			box_number = group_info.second;
+			break;
+		}
+	}
+	if (box_number == 0)
+	{
+		return nullptr;
+	}
+	else
+	{
+		return Request_handler::find_box_by_name(box_number);
+	}
+}
+
+
+void Box::make_remote_coping(int socket, Request* req, Answer* answer)
+{
+	int note_length = 12; //12 bytes: group, src, dst
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			answer->cnt = sussecc_count;
+			break;
+		}
+		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
+		int dst = std::stoi(addit->substr(8 + displacement, 8) , 0, 16);
+		int src_group = std::stoi(addit->substr(16 + displacement, 8) , 0, 16);
+		int dst_group = this->get_group_on_another_side(src_group);
+		displacement += 24;
+		Disk* src_disk = this->find_device_by_sym(src);
+		Box* another = this->find_box_by_group(src_group);
+		if (another == nullptr)
+		{
+			error = 30000005;
+			break;
+		}
+		if (another->load > another->max_load)
+		{
+			answer->header = 30000003;
+			break;
+		}
+		Disk* dst_disk = another->find_device_by_sym(dst);
+		if (src_disk==nullptr or dst_disk==nullptr)
+		{
+			error = 30000002;
+			break;
+		}
+		else
+		{
+			bool already_in_pair = dst_disk->is_it_dst_to(src);
+			if (already_in_pair){
+				error = 30000001;
+				break;
+			}
+			bool can_be_target = dst_disk->can_be_dist();
+			if (can_be_target == false)
+			{
+					error = 30000004;
+					break;
+			}
+			else
+			{
+				dst_disk->make_coping_to_this_disk(dst_group, src);
+				src_disk->add_coping_from_this_disk(src_group, dst);
+				sussecc_count += 1;
+			}
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 10;
 	return;
 }
 
@@ -351,8 +440,8 @@ void Box::delete_local_pair(int socket, Request* req, Answer* answer){
 			answer->cnt = sussecc_count;
 			break;
 		}
-		int dst = std::stoi(addit->substr(displacement, 4) , 0, 16);
-		displacement += 4;
+		int dst = std::stoi(addit->substr(displacement, 8) , 0, 16);
+		displacement += 8;
 		Disk* dst_disk = this->find_device_by_sym(dst);
 		if (dst_disk==nullptr)
 		{
@@ -377,6 +466,174 @@ void Box::delete_local_pair(int socket, Request* req, Answer* answer){
 	answer->cnt = sussecc_count;
 	answer->cmd = 7;
 	return;
+}
+
+
+void Box::delete_remote_pair(int socket, Request* req, Answer* answer){
+	int note_length = 12; // group, src, dst
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			break;
+		}
+		int group = std::stoi(addit->substr(displacement, 8) , 0, 16);
+		int src = std::stoi(addit->substr(displacement + 8, 8) , 0, 16);
+		int dst = std::stoi(addit->substr(displacement + 16, 8) , 0, 16);
+		displacement += 24;
+		Disk* src_disk = this->find_device_by_sym(src);
+		Box* another = this->find_box_by_group(group);
+		if (another == nullptr)
+		{
+			answer->header = 30000004;
+			break;
+		}
+		if (another->load > another->max_load)
+		{
+			answer->header = 30000003;
+			break;
+		}
+		Disk* dst_disk = another->find_device_by_sym(dst);
+		if (dst_disk==nullptr or src_disk == nullptr)
+		{
+			error = 30000002;
+			break;
+		}
+		else
+		{
+			bool coping_this_moment = dst_disk->is_it_active_coping();
+			if (coping_this_moment){
+				error = 30000001;
+				break;
+			}
+			dst_disk->remove_from_pair();
+			src_disk->remove_pair_with(group, dst);
+			sussecc_count += 1;
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 11;
+	return;
+}
+
+
+void Box::remove_group(int socket, Request* req, Answer* answer)
+{
+	int note_length = 4; // group
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			break;
+		}
+		int group = std::stoi(addit->substr(displacement, 8) , 0, 16);
+		displacement += 8;
+		Box* another = this->find_box_by_group(group);
+		if (another == nullptr)
+		{
+			answer->header = 30000004;
+			break;
+		}
+		if (another->load > another->max_load)
+		{
+			answer->header = 30000003;
+			break;
+		}
+
+		int another_group = this->get_group_on_another_side(group);
+		bool active1 = this->is_active_coping_in_group(group);
+		bool active2 = another->is_active_coping_in_group(another_group);
+		if (active1 or active2)
+		{
+			error = 30000001;
+			break;
+		}
+		else
+		{
+			this->delete_group(group);
+			another->delete_group(another_group);
+			sussecc_count += 1;
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 12;
+	return;
+}
+
+
+bool Box::is_active_coping_in_group(int group)
+{
+	for(struct Disk_info disk_info : *(this->disks))
+	{
+		if (disk_info.disk->get_group() == group)
+		{
+			return true;
+			break;
+		}
+	}
+	return false;
+}
+
+
+void Box::delete_group(int group)
+{
+	for(auto iter = this->groups->begin(); iter != this->groups->end(); iter++)
+	{
+		if (iter->first == group)
+		{
+			this->groups->erase(iter);
+			break;
+		}
+	}
+}
+
+
+std::string Box::get_all_devices(Request* req, Answer* ans)
+{
+	std::string* addit = new std::string;
+	std::list<std::string> copings;
+	for(auto diskinf : *(this->disks))
+	{
+		int sym = diskinf.sym;
+		copings.push_back(expand_to_byte(sym));
+
+	}
+
+
+	int note_counter = 0;
+	int start = req->start;
+	int amount = req->cnt;
+
+	std::cout << "Len: " << copings.size() << std::endl;
+	for (auto note : copings)
+	{
+		if (note_counter > amount)
+		{
+			break;
+		}
+		if (note_counter >= start)
+		{
+			*addit += note;
+		}
+		note_counter += 1;
+	}
+	ans->cmd = 8;
+	ans->cnt = note_counter;
+	ans->header = 30000000;
+	std::cout << "amount: " << amount << std::endl;
+	return *addit;
 }
 
 
@@ -433,6 +690,52 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	ans->header = 30000000;
 	std::cout << "amount: " << amount << std::endl;
 	return *addit;
+}
+
+
+void Box::make_group(int socket, Request* req, Answer* answer)
+{
+	int note_length = 16; // dst
+	int error = 30000000;
+	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
+	int sussecc_count = 0;
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		if (this->load > this->max_load)
+		{
+			answer->header = 30000003;
+			answer->cnt = sussecc_count;
+			break;
+		}
+		int src_box_number = std::stoi(addit->substr(displacement,      8) , 0, 16);
+		int src_gr  = std::stoi(addit->substr(displacement + 8,  8) , 0, 16);
+		int dst_box_number = std::stoi(addit->substr(displacement + 16, 8) , 0, 16);
+		int dst_gr  = std::stoi(addit->substr(displacement + 32, 8) , 0, 16);
+		displacement += 32;
+
+		if (src_box_number != this->number)
+		{
+			error = 30000001;
+			break;
+		}
+		else
+		{
+			Box* dst_box = Request_handler::find_box_by_name(dst_box_number);
+			if (dst_box == nullptr)
+			{
+				error = 30000002;
+				break;
+			}
+			this->groups->push_back(std::make_pair(src_gr, dst_box_number));
+			dst_box->groups->push_back(std::make_pair(dst_gr, src_box_number));
+			sussecc_count += 1;
+		}
+	}
+	answer->header = error;
+	answer->cnt = sussecc_count;
+	answer->cmd = 9;
+	return;
 }
 
 

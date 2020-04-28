@@ -183,6 +183,56 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			}
 			current_box->delete_local_pair(socket, request, answer);
 			break;
+		case 8:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000008";
+				return result;
+			}
+			current_box->get_all_devices(request, answer);
+			break;
+		case 9:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000009";
+				return result;
+			}
+			current_box->make_group(socket, request, answer);
+			break;
+		case 10:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000010";
+				return result;
+			}
+			current_box->make_remote_coping(socket, request, answer);
+			break;
+		case 11:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000010";
+				return result;
+			}
+			current_box->delete_remote_pair(socket, request, answer);
+			break;
+		case 12:
+			current_box = get_box_of_request(request);
+			if (current_box == nullptr)
+			{
+				std::cout << "Box with device " << request->device << " not found" << std::endl;
+				*result = "2280000000000000000000000000000000000010";
+				return result;
+			}
+			current_box->remove_group(socket, request, answer);
+			break;
 	}
 
 
