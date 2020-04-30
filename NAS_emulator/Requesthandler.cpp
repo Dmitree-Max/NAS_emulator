@@ -37,7 +37,7 @@ struct Request* Request_handler::get_command(int socket)
 	decode_signal(buffer, work_buffer, COMMAND_LENGTH);
 	char_array_into_string(work_buffer, &command, COMMAND_LENGTH * 2);
 	std::cout << "command: " <<command<<"\n";
-	error = command_parser(&command, current_requuest);
+	error = parse_comand(&command, current_requuest);
 	if (error)
 	{
 		return nullptr;
@@ -50,7 +50,7 @@ struct Request* Request_handler::get_command(int socket)
 // device header   flags    start    cnt      cmd  fmt   mhop
 // 0001   30000002 00000000 00000000 00000000 0003 0000  00000001
 //
-bool Request_handler::command_parser(std::string* src, struct Request* req)
+bool Request_handler::parse_comand(std::string* src, struct Request* req)
 {
 	try{
 		req->device = std::stoi(src->substr(0, 4) , 0, 16);
@@ -128,7 +128,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000001";
+				*result = "3000000800000000000000000000000000010000";
+				std::cout << "answer to client:  " <<*result << std::endl;
 				return result;
 			}
 			addit = current_box->make_answer_is_device_in_box(request->device, answer);
@@ -218,7 +219,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000010";
+				*result = "2280000000000000000000000000000000000011";
 				return result;
 			}
 			current_box->delete_remote_pair(socket, request, answer);
@@ -228,7 +229,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000010";
+				*result = "2280000000000000000000000000000000000012";
 				return result;
 			}
 			current_box->remove_group(socket, request, answer);

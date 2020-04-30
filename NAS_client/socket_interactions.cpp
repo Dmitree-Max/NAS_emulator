@@ -89,7 +89,6 @@ std::string handle_answer(int socket) {
 	}
 
 	std::string additional_fields = *get_additional_fields(socket, additional_count * multiplier);
-
 	return result + additional_fields;
 }
 

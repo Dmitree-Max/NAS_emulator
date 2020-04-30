@@ -18,7 +18,7 @@ extern int WORKING_PORT;
 
 int main(int argc, char *argv[]){
 
-	initialize_system("config.txt");
+	initialize_system("auto_config.txt");
 
 
 	int socker_descriptor = 0, connfd = 0;

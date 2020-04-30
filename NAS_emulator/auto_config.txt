@@ -1,0 +1,5 @@
+Automatically generated configuration
+
+Disks: {276, 265, 52, 682, 891, 961, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+Boxes: {|992: [disk 276, sym 61], [disk 265, sym 477], [disk 0, sym 722], [disk 0, sym 102], [disk 0, sym 318], [disk 0, sym 115], |, |133: [disk 52, sym 524], [disk 682, sym 364], [disk 0, sym 885], [disk 0, sym 326], [disk 0, sym 9], [disk 0, sym 437], |, |634: [disk 891, sym 8], [disk 961, sym 760], [disk 0, sym 711], |, }

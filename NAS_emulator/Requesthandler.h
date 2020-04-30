@@ -38,7 +38,7 @@ namespace Request_handler
 	void handle_request(int socket, int id);
 	struct Request* get_command(int socket);
 	std::string* handle_comand(struct Request* request, int socket);
-	bool command_parser(std::string* src, struct Request* req);
+	bool parse_comand(std::string* src, struct Request* req);
 
 
 	int make_snapshot(int box, int disk);
