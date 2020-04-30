@@ -9,6 +9,7 @@
 int main() {
 
 	get_box_and_disks_configuration();
+	get_other_disks();
 	print_structure();
 	//is device in box       0001290000000000000000000000000000000001000000000000
 	//std::string comand1 = "0007290000000000000000000000000000000001000000000006";
