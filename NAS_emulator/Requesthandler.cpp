@@ -192,7 +192,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 				*result = "2280000000000000000000000000000000000008";
 				return result;
 			}
-			current_box->get_all_devices(request, answer);
+			addit = current_box->get_all_devices(request, answer);
 			break;
 		case 9:
 			current_box = get_box_of_request(request);

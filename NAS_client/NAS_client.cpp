@@ -5,9 +5,9 @@
 
 namespace nasclient{
 	std::string send_command(std::string command, char* ip_adress, int port) {
-		printf("Client started\n");
+		//printf("Client started\n");
 		int socket_discriptor = 0;
-		printf("\n");
+		//printf("\n");
 
 		struct sockaddr_in serv_addr;
 		memset(&serv_addr, '0', sizeof(serv_addr));

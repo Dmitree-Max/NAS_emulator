@@ -86,6 +86,9 @@ std::string handle_answer(int socket) {
 		case 4:
 			multiplier = 8;
 			break;
+		case 8:
+			multiplier = 4;
+			break;
 	}
 
 	std::string additional_fields = *get_additional_fields(socket, additional_count * multiplier);
