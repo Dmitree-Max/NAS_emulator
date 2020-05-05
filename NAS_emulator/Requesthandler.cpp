@@ -1,7 +1,6 @@
 
 #include "Requesthandler.h"
 
-std::list<struct Box_info> global_boxes;
 
 void Request_handler::handle_request(int socket, int id) {
 
@@ -64,7 +63,7 @@ bool Request_handler::parse_comand(std::string* src, struct Request* req)
 	}
 	catch (std::exception& e)
 	{
-	    std::cout << "Standard exception: " << e.what() << std::endl;
+		log_file << "Standard exception: " << e.what() << std::endl;
 	    return true;
 	}
 	return false;

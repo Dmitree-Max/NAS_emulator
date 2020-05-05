@@ -8,13 +8,15 @@
 #include <string.h>
 #include <sys/types.h>
 #include <iostream>
+#include <fstream>
 #include <thread>
 #include <vector>
-
+#include "global_functions.h"
+#include "global_variables_and_constants.h"
 #include "Requesthandler.h"
 #include "system_initialize.h"
 
-extern int WORKING_PORT;
+
 
 int main(int argc, char *argv[]){
 
@@ -42,6 +44,7 @@ int main(int argc, char *argv[]){
 
 
 	printf("server started\n");
+	print_log(1, "server started\n");
 	int id = 0;
     while(true)
     {

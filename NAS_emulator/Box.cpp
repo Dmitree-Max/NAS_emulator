@@ -2,11 +2,10 @@
 
 #include "Box.h"
 
-std::list<std::thread> global_processes;
 
 Box::Box(int input_number) {
 	disks = new  std::list<struct Disk_info>;
-	groups = new std::list<std::pair<int, int> >;
+	groups = new std::list<std::pair<std::pair<int, int>, int> >;
 	version = 0;
 	number = input_number;
 	load = 0;
@@ -79,31 +78,11 @@ std::list<struct Disk_info>* Box::get_disks()
 
 int Box::get_group_on_another_side(int group)
 {
-	int box_group_with_name = 0;
 	for(auto group_info : *(this->groups))
 	{
-		if (group_info.first == group)
+		if (group_info.first.first == group)
 		{
-			box_group_with_name = group_info.second;
-			break;
-		}
-	}
-	if (box_group_with_name != 0)
-	{
-		Box* box = Request_handler::find_box_by_name(box_group_with_name);
-		if (box == nullptr)
-		{
-			return 0;
-		}
-		else
-		{
-			for(auto group_info : *(box->groups))
-			{
-				if (group_info.first == this->number)
-				{
-					return group_info.second;
-				}
-			}
+			return group_info.first.second;
 		}
 	}
 	return 0;
@@ -169,7 +148,7 @@ Box* Box::find_box_by_group(int group)
 	int box_number = 0;
 	for(auto group_info : *(this->groups))
 	{
-		if (group_info.first == group)
+		if (group_info.first.first == group)
 		{
 			box_number = group_info.second;
 			break;
@@ -255,8 +234,6 @@ void Box::make_remote_coping(int socket, Request* req, Answer* answer)
 void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 {
 
-    std::ofstream log;
-    log.open("log.txt");
 	int note_length = 8; //8 bytes, src, dst
 	int error = 30000000;
 	std::string* addit = Socket_interactions::get_additional_fields(socket, req->cnt * note_length);
@@ -267,7 +244,7 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		if (this->load > this->max_load)
 		{
 			answer->header = 30000003;
-			log << "бокс " << this->number << " перегружен" << std::endl;
+			print_log(1, "Бокс перегружен\n");
 			break;
 		}
 		int src = std::stoi(addit->substr(0 + displacement, 8) , 0, 16);
@@ -278,7 +255,7 @@ void Box::activate_local_coping(int socket, Request* req, Answer* answer)
 		if (src_disk==nullptr or dst_disk==nullptr)
 		{
 			error = 30000002;
-			log << "девайсы недоступны" << std::endl;
+			print_log(2, "девайсы недоступны", "\n");
 			break;
 		}
 		else
@@ -405,7 +382,7 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 	int start = req->start;
 	int amount = req->cnt;
 
-	std::cout << "Len: " << copings.size() << std::endl;
+	//std::cout << "Len: " << copings.size() << std::endl;
 	for (auto note : copings)
 	{
 		if (note_counter > amount)
@@ -591,7 +568,7 @@ void Box::delete_group(int group)
 {
 	for(auto iter = this->groups->begin(); iter != this->groups->end(); iter++)
 	{
-		if (iter->first == group)
+		if (iter->first.first == group)
 		{
 			this->groups->erase(iter);
 			break;
@@ -616,7 +593,7 @@ std::string Box::get_all_devices(Request* req, Answer* ans)
 	int start = req->start;
 	int amount = req->cnt;
 
-	std::cout << "Len: " << copings.size() << std::endl;
+	//std::cout << "Len: " << copings.size() << std::endl;
 	for (auto note : copings)
 	{
 		if (note_counter > amount)
@@ -632,7 +609,7 @@ std::string Box::get_all_devices(Request* req, Answer* ans)
 	ans->cmd = 8;
 	ans->cnt = note_counter;
 	ans->header = 30000000;
-	std::cout << "amount: " << amount << std::endl;
+	//std::cout << "amount: " << amount << std::endl;
 	return *addit;
 }
 
@@ -672,7 +649,7 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	int start = req->start;
 	int amount = req->cnt;
 
-	std::cout << "Len: " << copings.size() << std::endl;
+	//std::cout << "Len: " << copings.size() << std::endl;
 	for (auto note : copings)
 	{
 		if (note_counter > amount)
@@ -688,7 +665,7 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	ans->cmd = 2;
 	ans->cnt = note_counter;
 	ans->header = 30000000;
-	std::cout << "amount: " << amount << std::endl;
+	//std::cout << "amount: " << amount << std::endl;
 	return *addit;
 }
 
@@ -705,7 +682,11 @@ void Box::make_group(int socket, Request* req, Answer* answer)
 		if (this->load > this->max_load)
 		{
 			answer->header = 30000003;
-			answer->cnt = sussecc_count;
+			break;
+		}
+		if (this->get_group_ammount() >= 255)
+		{
+			answer->header = 30000004;
 			break;
 		}
 		int src_box_number = std::stoi(addit->substr(displacement,      8) , 0, 16);
@@ -727,8 +708,13 @@ void Box::make_group(int socket, Request* req, Answer* answer)
 				error = 30000002;
 				break;
 			}
-			this->groups->push_back(std::make_pair(src_gr, dst_box_number));
-			dst_box->groups->push_back(std::make_pair(dst_gr, src_box_number));
+			if (dst_box->get_group_ammount() >= 255)
+			{
+				answer->header = 30000004;
+				break;
+			}
+			this->groups->push_back(std::make_pair(std::make_pair(src_gr, dst_gr), dst_box_number));
+			dst_box->groups->push_back(std::make_pair(std::make_pair(dst_gr, src_gr), src_box_number));
 			sussecc_count += 1;
 		}
 	}
@@ -739,7 +725,10 @@ void Box::make_group(int socket, Request* req, Answer* answer)
 }
 
 
-
+int Box::get_group_ammount()
+{
+	return this->groups->size();
+}
 
 
 

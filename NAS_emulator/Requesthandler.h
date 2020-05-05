@@ -9,6 +9,7 @@
 
 
 #include <iostream>
+#include <fstream>
 #include <list>
 #include <unistd.h>
 #include <stdio.h>
@@ -18,6 +19,7 @@
 
 class Box;
 extern std::list<struct Box_info> global_boxes;
+extern std::ofstream log_file;
 
 struct Box_info {
 	Box* box;

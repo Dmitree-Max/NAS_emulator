@@ -12,7 +12,7 @@ CPP_SRCS += \
 ../Requesthandler.cpp \
 ../Snapshot.cpp \
 ../Socketinteractions.cpp \
-../global_variable_and_constants.cpp \
+../global_functions.cpp \
 ../interior_formats.cpp \
 ../system_initialize.cpp 
 
@@ -25,7 +25,7 @@ OBJS += \
 ./Requesthandler.o \
 ./Snapshot.o \
 ./Socketinteractions.o \
-./global_variable_and_constants.o \
+./global_functions.o \
 ./interior_formats.o \
 ./system_initialize.o 
 
@@ -38,7 +38,7 @@ CPP_DEPS += \
 ./Requesthandler.d \
 ./Snapshot.d \
 ./Socketinteractions.d \
-./global_variable_and_constants.d \
+./global_functions.d \
 ./interior_formats.d \
 ./system_initialize.d 
 
