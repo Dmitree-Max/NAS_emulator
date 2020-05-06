@@ -1,7 +1,5 @@
 #include "main_functions.h"
 
-std::list<struct hash_table_node*> DSS;
-
 
 void get_box_and_disks_configuration()
 {
@@ -31,7 +29,7 @@ void get_box_and_disks_configuration()
 						new_box->gatekeepers = new_gatekeepers;
 						new_box->disks = new_disks;
 						new_gatekeepers->push_back(std::make_pair(disk_info->device, disk_info->sym));
-						DSS.push_back(new_box);
+						structure->get_DSS()->push_back(new_box);
 					}
 					else
 					{
@@ -48,16 +46,342 @@ void get_box_and_disks_configuration()
 		else
 		{
 			std::cout << "main answer parse error" << std::endl;
+			break;
 		}
 		delete(main_answer);
 	}
 }
 
 
+// device header   flags    start    cnt      cmd  fmt   mhop
+// 0001   30000002 00000000 00000000 00000000 0003 0000  00000001
+//
+bool parse_request(std::string* src, struct Request* req)
+{
+	try{
+		req->device = std::stoi(src->substr(0, 4) , 0, 16);
+		req->header = std::stoi(src->substr(4, 8) , 0, 16);
+		req->flags  = std::stoi(src->substr(12, 8), 0, 16);
+		req->start  = std::stoi(src->substr(20, 8), 0, 16);
+		req->cnt    = std::stoi(src->substr(28, 8), 0, 16);
+		req->cmd    = std::stoi(src->substr(36, 4), 0, 16);
+		req->fmt    = std::stoi(src->substr(40, 4), 0, 16);
+		req->mhop   = std::stoi(src->substr(44, 8), 0, 16);
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "Standard exception: " << e.what() << std::endl;
+	    return false;
+	}
+	return true;
+}
+
+
+int is_request_valuable(std::string request, std::list<std::string>* additional_requests)
+{
+	std::string requst_string = request.substr(0, 54);
+	std::string additional = request.substr(54, request.length() - 54);
+	struct Request* req = new struct Request;
+	if (parse_request(&requst_string, req))
+	{
+		switch (req->cmd)
+		{
+			case 3:
+				return make_local_pairs(req, &additional);
+			case 5:
+				return activate_local_pairs(req, &additional);
+			case 7:
+				return remove_local_pairs(req, &additional);
+			case 10:
+				return make_remote_pairs(req, &additional);
+			case 11:
+				return remove_remote_pairs(req, &additional);
+			case 9:
+				return make_groups(req, &additional);
+			case 12:
+				return delete_groups(req, &additional);
+			default:
+				return -2;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+	return -1;
+}
+
+
+int make_groups(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int box = structure->find_box_by_device(req->device);
+		int src_box = std::stoi(additional->substr(displacement, 8), 0, 16);
+		if (box != src_box)
+		{
+			return 1;
+		}
+		int src_group = std::stoi(additional->substr(displacement +8, 8), 0, 16);
+		int dst_box = std::stoi(additional->substr(displacement + 16, 8), 0, 16);
+		int result = can_make_group(src_box, dst_box, src_group);
+		if (result != 0)
+			return result;
+		displacement += 32;
+	}
+	return 0;
+}
+
+
+int delete_groups(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int group = std::stoi(additional->substr(displacement, 8), 0, 16);
+		int result = can_delete_group(group);
+		if (result != 0)
+			return result;
+		displacement += 8;
+	}
+	return 0;
+}
+
+
+int can_make_group(int src_box, int dst_box, int src_group)
+{
+	if (!structure->is_there_such_box(dst_box))
+	{
+		return 2;
+	}
+	if (structure->calc_amount_groups_with_box(src_box) >= 255)
+		return 4;
+	if (structure->calc_amount_groups_with_box(dst_box) >= 255)
+		return 4;
+	structure->make_group(src_group, src_box, dst_box);
+	return 0;
+}
+
+
+int can_delete_group(int group)
+{
+	int delete_status = structure->delete_group(group);
+
+	// no such group
+	if (delete_status == -1)
+		return 2;
+
+	//there is active coping in the group
+	if (delete_status == -2)
+		return 1;
+	return 0;
+}
+
+int activate_local_pairs(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int box = structure->find_box_by_device(req->device);
+		int src_sym = std::stoi(additional->substr(displacement, 8), 0, 16);
+		int dst_sym = std::stoi(additional->substr(displacement +8, 8), 0, 16);
+		int result = can_activate_local_pair(box, src_sym, dst_sym);
+		if (result != 0)
+			return result;
+		displacement += 16;
+	}
+	return 0;
+}
+
+
+int remove_local_pairs(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int box = structure->find_box_by_device(req->device);
+		int dst_sym = std::stoi(additional->substr(displacement, 8), 0, 16);
+		int result = can_remove_local_pair(box, dst_sym);
+		if (result != 0)
+			return result;
+		displacement += 8;
+	}
+	return 0;
+}
+
+
+int make_local_pairs(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int box = structure->find_box_by_device(req->device);
+		int src_sym = std::stoi(additional->substr(displacement, 8), 0, 16);
+		int dst_sym = std::stoi(additional->substr(displacement + 8, 8), 0, 16);
+		int result = can_make_local_pair(box, src_sym, dst_sym);
+		if (result != 0)
+			return result;
+		displacement += 16;
+	}
+	return 0;
+}
+
+
+int make_remote_pairs(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int src_box = structure->find_box_by_device(req->device);
+		int group 	= std::stoi(additional->substr(displacement    ,  8), 0, 16);
+		int src_sym = std::stoi(additional->substr(displacement + 8,  8), 0, 16);
+		int dst_sym = std::stoi(additional->substr(displacement + 16, 8), 0, 16);
+		int dst_box = structure->find_box_by_group(src_box, group);
+		int result  = can_make_remote_pair(group, src_box, dst_box, src_sym, dst_sym);
+		if (result != 0)
+			return result;
+		displacement += 24;
+	}
+	return 0;
+}
+
+
+int remove_remote_pairs(struct Request* req, std::string* additional)
+{
+	int displacement = 0;
+	for (int i = 0; i < req->cnt; i++)
+	{
+		int src_box = structure->find_box_by_device(req->device);
+		int group 	= std::stoi(additional->substr(displacement    ,  8), 0, 16);
+		int src_sym = std::stoi(additional->substr(displacement + 8,  8), 0, 16);
+		int dst_sym = std::stoi(additional->substr(displacement + 16, 8), 0, 16);
+		int dst_box = structure->find_box_by_group(src_box, group);
+		if (dst_box == 0)
+			return 4;
+		int result  = can_remove_remote_pair(group, src_box, dst_box, src_sym, dst_sym);
+		if (result != 0)
+			return result;
+		displacement += 24;
+	}
+	return 0;
+}
+
+
+int can_make_local_pair(int box, int src_sym, int dst_sym)
+{
+	int dst_status = structure->is_it_dist(box, dst_sym);
+	if (dst_status >= 1)
+	{
+		int src_status = structure->is_it_src_to(box, 0, src_sym, dst_sym);
+		if ((src_status == 1) or (src_status == 4))
+			return 1;
+		if (src_status == -1)
+			return 2;
+		return 4;
+	}
+	if (dst_status == -1)
+		return 2;
+
+	structure->make_pair(box, box, 0, src_sym, dst_sym);
+	return 0;
+}
+
+
+int can_remove_remote_pair(int group, int src_box, int dst_box, int src_sym, int dst_sym)
+{
+	int dst_status = structure->is_it_dist(dst_box, dst_sym);
+	if (dst_status >= 1)
+	{
+		int src_status = structure->is_there_remote_pair(group, src_sym, dst_sym);
+		if (src_status == 4)
+			return 1;
+		if (src_status == -1)
+			return 2;
+		if (src_status == 0)
+			return 5;
+		if (src_status == 1)
+		{
+			structure->remove_remote_pair(src_box, dst_box, group, src_sym, dst_sym);
+			return 0;
+		}
+	}
+	if (dst_status == -1)
+		return 2;
+	return 5;
+}
+
+
+int can_make_remote_pair(int group, int src_box, int dst_box, int src_sym, int dst_sym)
+{
+	int dst_status = structure->is_it_dist(dst_box, dst_sym);
+	int src_status = structure->is_it_dist(src_box, src_sym);
+	if (dst_status >= 1 or src_status >= 1)
+	{
+		int src_status = structure->is_there_remote_pair(group, src_sym, dst_sym);
+		if ((src_status == 1) or (src_status == 4))
+			return 1;
+		if (src_status == -1)
+			return 2;
+		return 4;
+	}
+	if (dst_status == -1 or src_status == -1)
+		return 2;
+	structure->make_remote_pair(src_box, dst_box, group, src_sym, dst_sym);
+	return 0;
+}
+
+
+int can_remove_local_pair(int box, int dst_sym)
+{
+	int dst_status = structure->is_it_dist(box, dst_sym);
+	int src_sym = 0;
+	if (dst_status >= 1)
+	{
+		src_sym = dst_status; 		//if dst_status >= 1, there is src_sym
+		int src_status = structure->is_it_src_to(box, 0, src_sym, dst_sym);
+		if (src_status == 4)
+			return 1;
+		if (src_status == -1)
+			return 2;
+		if (src_status == 0)
+			return 4;
+	}
+	if (dst_status == -1)
+		return 2;
+
+	structure->delete_pair(box, 0, src_sym, dst_sym);
+	return 0;
+}
+
+
+int can_activate_local_pair(int box, int src_sym, int dst_sym)
+{
+	int dst_status = structure->is_it_dist(box, dst_sym);
+	if (dst_status >= 1)
+	{
+		int src_status = structure->is_it_src_to(box, 0, src_sym, dst_sym);
+		if (src_status == 0)
+			return 1;
+		if (src_status == -1)
+			return 2;
+		if (src_status == 4) //coping is active
+			return 4;
+		return 0;
+	}
+	if (dst_status == -1)
+		return 2;
+	if (dst_status == 0)
+		return 1;
+
+	structure->make_pair(box, box, 0, src_sym, dst_sym);
+	return 0;
+}
+
 
 void get_other_disks()
 {
-	for (auto box : DSS)
+	for (auto box : *(structure->get_DSS()))
 	{
 		if(box->gatekeepers->size() == 0)
 		{
@@ -66,7 +390,6 @@ void get_other_disks()
 		}
 		else
 		{
-
 			int some_gatekeeper = box->gatekeepers->front().first;
 			std::string command = make_simple_command(some_gatekeeper, 10000, 8);
 			std::string answer = nasclient::send_command(command, "127.0.0.1", 5060);
@@ -122,7 +445,7 @@ std::string make_simple_command(int device, int cnt, int command)
 
 struct hash_table_node* find_box(int number)
 {
-	for (struct hash_table_node* el : DSS)
+	for (struct hash_table_node* el : (*structure->get_DSS()))
 	{
 		if (el->box_number == number)
 		{
@@ -198,7 +521,7 @@ bool parse_answer(std::string* src, struct Answer* answer)
 
 void print_structure()
 {
-	for (struct hash_table_node* node : DSS)
+	for (struct hash_table_node* node : (*structure->get_DSS()))
 	{
 		std::cout << "Box " << node->box_number << ": \n  gatekeepers:\n";
 		for (auto gk : *(node->gatekeepers))
