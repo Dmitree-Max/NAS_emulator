@@ -4,8 +4,10 @@
 
 #include <fstream>
 #include <stdarg.h>
+#include <list>
 
 
+extern std::list<struct Box_info> global_boxes;
 extern std::ofstream log_file;
 
 void print_log(int num, ...);

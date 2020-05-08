@@ -12,6 +12,7 @@ Disk::Disk(int arg_number) {
 }
 
 Disk::~Disk() {
+	delete(this->coping_from_this_disk);
 }
 
 int Disk::get_number() {

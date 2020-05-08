@@ -13,11 +13,10 @@ void Request_handler::handle_request(int socket, int id) {
 	std::cout << "request:  " << *current_request;
 
 
-	std::string* answer = handle_comand(current_request, socket);
+	std::string answer = handle_comand(current_request, socket);
 
 	//std::cout << "length:  " << answer->length() << "  " << *answer;
-	Socket_interactions::write_command(socket, answer);
-	delete(answer);
+	Socket_interactions::write_command(socket, &answer);
 	delete(current_request);
 	close(socket);
 }
@@ -89,7 +88,7 @@ Box* Request_handler::find_box_by_device(int device)
 	{
 		for (auto& diskinfo : *(box_info.box->get_disks()))
 		{
-			if (diskinfo.disk->get_number() == device)
+			if (diskinfo->disk->get_number() == device)
 			{
 				return box_info.box;
 			}
@@ -115,10 +114,10 @@ Box* Request_handler::get_box_of_request(struct Request* request)
 }
 
 
-std::string* Request_handler::handle_comand(struct Request* request, int socket) {
+std::string Request_handler::handle_comand(struct Request* request, int socket) {
 //	std::string* additional_fields = get_additional_fields(socket, current_request->cnt);
 //	std::cout << "additional was: " << *additional_fields << " from " << id << "\n";
-	std::string* result = new std::string;
+	std::string result;
 	std::string addit = "";
 	Answer* answer = new Answer;
 	Box* current_box;
@@ -129,8 +128,9 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "3000000800000000000000000000000000010000";
-				std::cout << "answer to client:  " <<*result << std::endl;
+				result = "3000000800000000000000000000000000010000";
+				std::cout << "answer to client:  " <<result << std::endl;
+				delete(answer);
 				return result;
 			}
 			addit = current_box->make_answer_is_device_in_box(request->device, answer);
@@ -140,7 +140,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000003";
+				result = "2280000000000000000000000000000000000003";
+				delete(answer);
 				return result;
 			}
 			current_box->make_local_coping(socket, request, answer);
@@ -150,7 +151,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000004";
+				result = "2280000000000000000000000000000000000004";
+				delete(answer);
 				return result;
 			}
 			addit = current_box->find_all_local_coping(request, answer);
@@ -160,7 +162,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000005";
+				result = "2280000000000000000000000000000000000005";
+				delete(answer);
 				return result;
 			}
 			current_box->activate_local_coping(socket, request, answer);
@@ -170,7 +173,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000006";
+				result = "2280000000000000000000000000000000000006";
+				delete(answer);
 				return result;
 			}
 			current_box->activate_track_local_coping(socket, request, answer);
@@ -180,7 +184,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000007";
+				result = "2280000000000000000000000000000000000007";
+				delete(answer);
 				return result;
 			}
 			current_box->delete_local_pair(socket, request, answer);
@@ -190,7 +195,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000008";
+				result = "2280000000000000000000000000000000000008";
+				delete(answer);
 				return result;
 			}
 			addit = current_box->get_all_devices(request, answer);
@@ -200,7 +206,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000009";
+				result = "2280000000000000000000000000000000000009";
+				delete(answer);
 				return result;
 			}
 			current_box->make_group(socket, request, answer);
@@ -210,7 +217,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000010";
+				result = "2280000000000000000000000000000000000010";
+				delete(answer);
 				return result;
 			}
 			current_box->make_remote_coping(socket, request, answer);
@@ -220,7 +228,8 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000011";
+				result = "2280000000000000000000000000000000000011";
+				delete(answer);
 				return result;
 			}
 			current_box->delete_remote_pair(socket, request, answer);
@@ -230,16 +239,18 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 			if (current_box == nullptr)
 			{
 				std::cout << "Box with device " << request->device << " not found" << std::endl;
-				*result = "2280000000000000000000000000000000000012";
+				result = "2280000000000000000000000000000000000012";
+				delete(answer);
 				return result;
 			}
 			current_box->remove_group(socket, request, answer);
 			break;
 	}
 
-
-	*result = *answer_to_string(answer) + addit + "\0";
+	std::string* answer_string_type = answer_to_string(answer);
+	result = *answer_string_type + addit + "\0";
+	delete(answer_string_type);
 	delete(answer);
-	std::cout << "answer to client:  " <<*result << std::endl;
+	std::cout << "answer to client:  " <<result << std::endl;
 	return result;
 }

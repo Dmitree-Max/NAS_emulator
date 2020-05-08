@@ -4,7 +4,7 @@
 
 
 Box::Box(int input_number) {
-	disks = new  std::list<struct Disk_info>;
+	disks = new std::list<struct Disk_info*>;
 	groups = new std::list<std::pair<std::pair<int, int>, int> >;
 	version = 0;
 	number = input_number;
@@ -13,7 +13,14 @@ Box::Box(int input_number) {
 }
 
 Box::~Box() {
-	// TODO Auto-generated destructor stub
+	delete(this->groups);
+	delete(this->disks);
+}
+
+
+int Box::get_number()
+{
+	return this->number;
 }
 
 
@@ -23,10 +30,10 @@ bool Box::find_if_device_in_box(int device, Answer* answer, int& device_sym){
 	{
 		for (auto& device_info : *(this->disks))
 		{
-			if (device_info.disk->get_number() == device)
+			if (device_info->disk->get_number() == device)
 			{
 				is_device_in_box = true;
-				device_sym = device_info.sym;
+				device_sym = device_info->sym;
 				break;
 			}
 		}
@@ -64,13 +71,14 @@ std::string Box::make_answer_is_device_in_box(int device, Answer* answer){
 	return add_answer;
 }
 
-void Box::set_disks(std::list<struct Disk_info>* disks)
+void Box::set_disks(std::list<struct Disk_info*>* disks)
 {
+	delete(this->disks);
 	this->disks = disks;
 	return;
 }
 
-std::list<struct Disk_info>* Box::get_disks()
+std::list<struct Disk_info*>* Box::get_disks()
 {
 	return this->disks;
 }
@@ -348,8 +356,8 @@ Disk* Box::find_device_by_sym(int sym)
 {
 	for(auto disk : *(this->disks))
 	{
-		if (disk.sym == sym)
-			return disk.disk;
+		if (disk->sym == sym)
+			return disk->disk;
 	}
 	return nullptr;
 }
@@ -369,11 +377,11 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
-		int src = diskinf.disk->get_coping_to();
-		int group = diskinf.disk->get_group();
+		int src = diskinf->disk->get_coping_to();
+		int group = diskinf->disk->get_group();
 		if ((src != 0) and (group == 0))
 		{
-			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf.sym);
+			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf->sym);
 			copings.push_back(current_str);
 		}
 	}
@@ -552,9 +560,9 @@ void Box::remove_group(int socket, Request* req, Answer* answer)
 
 bool Box::is_active_coping_in_group(int group)
 {
-	for(struct Disk_info disk_info : *(this->disks))
+	for(struct Disk_info* disk_info : *(this->disks))
 	{
-		if (disk_info.disk->get_group() == group)
+		if (disk_info->disk->get_group() == group)
 		{
 			return true;
 			break;
@@ -583,7 +591,7 @@ std::string Box::get_all_devices(Request* req, Answer* ans)
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
-		int sym = diskinf.sym;
+		int sym = diskinf->sym;
 		copings.push_back(expand_to_byte(sym));
 	}
 
@@ -619,11 +627,11 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
-		int src = diskinf.disk->get_coping_to();
-		int group = diskinf.disk->get_group();
+		int src = diskinf->disk->get_coping_to();
+		int group = diskinf->disk->get_group();
 		if ((src != 0) and (group != 0))
 		{
-			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf.disk->get_number())
+			std::string current_str = expand_to_byte(src) + expand_to_byte(diskinf->disk->get_number())
 					+ expand_to_byte(this->get_group_on_another_side(group)) + expand_to_byte(group);
 			copings.push_back(current_str);
 		}
@@ -631,13 +639,13 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 
 	for(auto diskinf : *(this->disks))
 	{
-		for(auto dst_element : *(diskinf.disk->get_coping_list()))
+		for(auto dst_element : *(diskinf->disk->get_coping_list()))
 		{
 			int dst = dst_element.second;
 			int group = dst_element.first;
 			if ((dst != 0) and (group != 0))
 			{
-				std::string current_str = expand_to_byte(diskinf.disk->get_number()) + expand_to_byte(dst) + expand_to_byte(group)
+				std::string current_str = expand_to_byte(diskinf->disk->get_number()) + expand_to_byte(dst) + expand_to_byte(group)
 						+ expand_to_byte(this->get_group_on_another_side(group));
 				copings.push_back(current_str);
 			}

@@ -1,45 +1,11 @@
-
-
 #include "system_initialize.h"
+
+
 extern std::list<struct Box_info> global_boxes;
 
-int initialize_system(const char* filename)
+
+void initialize_system(const char* filename)
 {
-	struct Init_obj* initializer = parse_file(filename);
-	std::cout << *initializer;
-
-	std::map<int, Disk*> disks;
-
-	for (int number : *(initializer->disks))
-	{
-		Disk* current = new Disk(number);
-		disks.insert({number, current});
-	}
-
-	for (struct About_box boxinfo : initializer->boxes)
-	{
-		Box* current = new Box(boxinfo.box_name);
-		std::list<struct Disk_info>* temp = new std::list<struct Disk_info>;
-		for (auto& x : *(boxinfo.disk_sym))
-		{
-			struct Disk_info* cur = new struct Disk_info;
-			cur->sym  = x.second;
-			cur->disk = disks[x.first];
-			temp->push_back(*cur);
-		}
-		current->set_disks(temp);
-		struct Box_info* new_box = new struct Box_info;
-		new_box->box = current;
-		new_box->box_name = boxinfo.box_name;
-		global_boxes.push_back(*new_box);
-	}
-	return 0;
-}
-
-
-struct Init_obj* parse_file(const char* filename)
-{
-	struct Init_obj* result = new Init_obj;
 	std::streampos size;
 	char * memblock;
 
@@ -54,46 +20,41 @@ struct Init_obj* parse_file(const char* filename)
 	}
 	else
 	{
-	    return result;
+	    return;
 	}
 
 	std::string text = std::string(memblock);
-	free(memblock);
-	std::list<std::string>* parsed_by_brackets = parse_by_brackets(text);
+	delete(memblock);
 
-	std::string disks_text = parsed_by_brackets->front();
-	parsed_by_brackets->pop_front();
-	result->disks = find_numbers(disks_text);
-
-
-	std::string boxes_text = parsed_by_brackets->front();
-	//std::cout << boxes_text<< std::endl;
-	parsed_by_brackets->pop_front();
-
-	std::list<std::string>* parsed_by_sticks = parse_by_sticks(boxes_text);
+	std::list<std::string>* parsed_by_sticks = parse_by_sticks(text);
 	for (auto& box : *parsed_by_sticks)
 	{
-		//std::cout << box << std::endl;
 		std::list<int>* all_digits = find_numbers(box);
-		struct About_box* current = new struct About_box;
-		current->box_name = all_digits->front();
-		//std::cout << current->box_name << std::endl;
+
+		Box* new_box = new Box(all_digits->front());
 		all_digits->pop_front();
 
-		std::list<std::pair<int, int>>* disks = new std::list<std::pair<int, int>>;
+		std::list<struct Disk_info*>* temp = new std::list<struct Disk_info*>;
 		while(all_digits->size() > 1)
 		{
-			disks->push_back(std::make_pair(all_digits->front(), *std::next(all_digits->begin())));
+			struct Disk_info* cur = new struct Disk_info;
+			cur->sym  = *(next(all_digits->begin()));
+			std::cout << "sym: " << cur->sym << "\n";
+			cur->disk = new Disk(all_digits->front());
+			temp->push_back(cur);
 			all_digits->pop_front();
 			all_digits->pop_front();
 		}
-		current->disk_sym = disks;
-		result->boxes.push_back(*current);
+		new_box->set_disks(temp);
+		struct Box_info new_box_info;
+		new_box_info.box = new_box;
+		new_box_info.box_name = new_box->get_number();
+		global_boxes.push_back(new_box_info);
+		delete(all_digits);
 	}
-
-    return result;
+	delete (parsed_by_sticks);
+	return;
 }
-
 
 
 std::list<std::string>* parse_by_brackets(std::string input)
@@ -137,36 +98,9 @@ std::list<int>* find_numbers(std::string input)
 		input = matches.suffix().str();
 	}
 	return result;
-
-
 }
 
 
-std::ostream& operator << (std::ostream& stm, const struct Init_obj& init)
-{
-	stm << "disks:  ";
-	for (auto& disk : *(init.disks))
-	{
-		stm << disk << "  ";
-	}
-	stm << std::endl << "boxes:" << std::endl;
-	for (auto& box : init.boxes)
-	{
-		stm << box;
-	}
-	return stm;
-}
-
-std::ostream& operator << (std::ostream& stm, const struct About_box& box)
-{
-	stm << "box: "  << box.box_name << "    disks:   ";
-	for (auto& disk : *(box.disk_sym))
-	{
-		stm << "disk:  " << disk.first << "  sym:  " << disk.second << "  ";
-	}
-	stm << std::endl;
-	return stm;
-}
 
 
 

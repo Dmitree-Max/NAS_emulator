@@ -18,6 +18,21 @@
 
 
 
+void clean_system()
+{
+	for (struct Box_info box_info : global_boxes)
+	{
+		Box* current_box = box_info.box;
+		for (struct Disk_info* disk_info : (*current_box->get_disks()))
+		{
+			delete(disk_info->disk);
+			delete(disk_info);
+		}
+		delete(current_box);
+	}
+}
+
+
 int main(int argc, char *argv[]){
 
 	initialize_system("auto_config.txt");
@@ -57,6 +72,6 @@ int main(int argc, char *argv[]){
     	thr.join();
     }
 
-
+    clean_system();
 	return 0;
 }

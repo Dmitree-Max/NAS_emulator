@@ -12,7 +12,7 @@ def generate_boxes(amount, max_number=1000):
     return result
 
 
-def generate_disks(boxes, max_gatekeepers=5, max_other_disks=30, max_disk_number=63999):
+def generate_disks(boxes, max_gatekeepers=2, max_other_disks=4, max_disk_number=63999):
     gatekeepers = []
     all_other_disk_am = 0
     box_disks = [0] * len(boxes)
@@ -41,16 +41,9 @@ def generate_disks(boxes, max_gatekeepers=5, max_other_disks=30, max_disk_number
 
 def main():
     with open("auto_config.txt", 'w') as log:
-        boxes = generate_boxes(20)
+        boxes = generate_boxes(3)
         gatekeepers, all_other_disk_am, box_disks = generate_disks(boxes)
         log.write("Automatically generated configuration\n\n")
-        log.write("Disks: {")
-        for disk_number in gatekeepers:
-            log.write(str(disk_number))
-            log.write(", ")
-        for i in range(all_other_disk_am - 1):
-            log.write("0, ")
-        log.write("0}\n\n")
         log.write("Boxes: {")
         for i in range(len(boxes)):
             log.write("|")

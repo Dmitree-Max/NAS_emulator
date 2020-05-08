@@ -13,3 +13,6 @@ void print_log(int num, ...)
     va_end(args);
 	log_file.close();
 }
+
+
+

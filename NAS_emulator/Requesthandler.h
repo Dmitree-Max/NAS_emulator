@@ -39,7 +39,7 @@ namespace Request_handler
 	Box* get_box_of_request(struct Request* request);
 	void handle_request(int socket, int id);
 	struct Request* get_command(int socket);
-	std::string* handle_comand(struct Request* request, int socket);
+	std::string handle_comand(struct Request* request, int socket);
 	bool parse_comand(std::string* src, struct Request* req);
 
 
