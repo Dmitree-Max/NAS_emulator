@@ -17,6 +17,8 @@ void Request_handler::handle_request(int socket, int id) {
 
 	//std::cout << "length:  " << answer->length() << "  " << *answer;
 	Socket_interactions::write_command(socket, answer);
+	delete(answer);
+	delete(current_request);
 	close(socket);
 }
 
@@ -237,6 +239,7 @@ std::string* Request_handler::handle_comand(struct Request* request, int socket)
 
 
 	*result = *answer_to_string(answer) + addit + "\0";
+	delete(answer);
 	std::cout << "answer to client:  " <<*result << std::endl;
 	return result;
 }

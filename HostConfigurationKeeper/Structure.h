@@ -26,15 +26,15 @@ struct hash_table_node
 {
 	int box_number;
 	std::list<int >* disks;
-	std::list<std::pair<int, int> >* gatekeepers;
+	std::list<std::pair<int, int> >* gatekeepers;       // first is device global number, second is sym
 };
 
 class Structure {
-	std::list<std::pair<int, int> > disks_boxes;  		// first is device, second is box. Here are only gate keepers
-	std::list<std::pair<int, int*> > boxes_dst_disks; 	// boxes and there disks arrays
+	std::list<std::pair<int, int> >* disks_boxes;  		// first is device global number, second is box. Here are only gate keepers
+	std::list<std::pair<int, int*> >* boxes_dst_disks; 	// boxes and there disks arrays
 	std::list<struct Group*>* groups;
 	// boxes and there disks with link to list of this disk as source info
-	std::list<std::pair<int, std::list<struct Src_disk_info>** > > boxes_src_disks;
+	std::list<std::pair<int, std::list<struct Src_disk_info*>** > >* boxes_src_disks; //array of pointers to lists
 
 	std::list<struct hash_table_node*>* DSS;             // physical structure of DDS
 public:
@@ -56,6 +56,7 @@ public:
 	void make_group(int group, int src_box, int dst_box);
 	int delete_group(int group);
 	bool is_there_active_coping(struct Group* group);
+	void initialize_full_structure();
 };
 
 

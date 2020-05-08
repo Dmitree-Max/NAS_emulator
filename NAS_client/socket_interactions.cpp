@@ -91,8 +91,10 @@ std::string handle_answer(int socket) {
 			break;
 	}
 
-	std::string additional_fields = *get_additional_fields(socket, additional_count * multiplier);
-	return result + additional_fields;
+	std::string* additional_fields = get_additional_fields(socket, additional_count * multiplier);
+	delete(answer);
+	delete(additional_fields);
+	return result + *additional_fields;
 }
 
 

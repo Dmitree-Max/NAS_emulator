@@ -365,7 +365,7 @@ void Box::decreese_load()
 
 std::string Box::find_all_local_coping(Request* req, Answer* ans)
 {
-	std::string* addit = new std::string;
+	std::string  addit;
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
@@ -391,7 +391,7 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 		}
 		if (note_counter >= start)
 		{
-			*addit += note;
+			addit += note;
 		}
 		note_counter += 1;
 	}
@@ -399,7 +399,7 @@ std::string Box::find_all_local_coping(Request* req, Answer* ans)
 	ans->cnt = note_counter;
 	ans->header = 30000000;
 	std::cout << "amount: " << amount << std::endl;
-	return *addit;
+	return addit;
 }
 
 
@@ -579,13 +579,12 @@ void Box::delete_group(int group)
 
 std::string Box::get_all_devices(Request* req, Answer* ans)
 {
-	std::string* addit = new std::string;
+	std::string addit;
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
 		int sym = diskinf.sym;
 		copings.push_back(expand_to_byte(sym));
-
 	}
 
 
@@ -593,7 +592,7 @@ std::string Box::get_all_devices(Request* req, Answer* ans)
 	int start = req->start;
 	int amount = req->cnt;
 
-	//std::cout << "Len: " << copings.size() << std::endl;
+//	std::cout << "Len: " << copings.size() << std::endl;
 	for (auto note : copings)
 	{
 		if (note_counter > amount)
@@ -602,21 +601,21 @@ std::string Box::get_all_devices(Request* req, Answer* ans)
 		}
 		if (note_counter >= start)
 		{
-			*addit += note;
+			addit += note;
 		}
 		note_counter += 1;
 	}
 	ans->cmd = 8;
 	ans->cnt = note_counter;
 	ans->header = 30000000;
-	//std::cout << "amount: " << amount << std::endl;
-	return *addit;
+//	std::cout << "amount: " << amount << std::endl;
+	return addit;
 }
 
 
 std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 {
-	std::string* addit = new std::string;
+	std::string addit;
 	std::list<std::string> copings;
 	for(auto diskinf : *(this->disks))
 	{
@@ -658,7 +657,7 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 		}
 		if (note_counter >= start)
 		{
-			*addit += note;
+			 addit += note;
 		}
 		note_counter += 1;
 	}
@@ -666,7 +665,7 @@ std::string Box::find_all_distance_coping(Request* req, Answer* ans)
 	ans->cnt = note_counter;
 	ans->header = 30000000;
 	//std::cout << "amount: " << amount << std::endl;
-	return *addit;
+	return  addit;
 }
 
 

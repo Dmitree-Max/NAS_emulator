@@ -101,14 +101,15 @@ int is_request_valuable(std::string request, std::list<std::string>* additional_
 			case 12:
 				return delete_groups(req, &additional);
 			default:
+				delete(req);
 				return -2;
 		}
 	}
 	else
 	{
+		delete(req);
 		return -1;
 	}
-	return -1;
 }
 
 
